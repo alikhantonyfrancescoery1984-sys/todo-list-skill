@@ -1,0 +1,14 @@
+import { build } from 'esbuild';
+import { mkdir, readFile, writeFile, copyFile } from 'node:fs/promises';
+await mkdir('dist/plugin', {recursive:true});
+await build({entryPoints:['src/main.ts'],bundle:true,format:'cjs',target:'es2021',external:['obsidian'],outfile:'dist/plugin/main.js'});
+const result=await build({entryPoints:['src/preview.ts'],bundle:true,format:'iife',target:'es2021',write:false});
+const js=result.outputFiles[0].text.replaceAll('</script','<\\/script');
+const statisticsCss=await readFile('src/ui/statistics/styles.css','utf8')+'\n'+await readFile('src/ui/workspace/styles.css','utf8');
+const themeCss=await readFile('src/ui/workspace/theme.css','utf8');
+const css=await readFile('src/ui/styles.css','utf8')+'\n'+statisticsCss+'\n'+themeCss;
+const html=`<!doctype html><html lang="zh-CN" data-type="software"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-type" content="software"><meta name="site-kind" content="software"><meta name="description" content="本地待办清单预览"><meta name="theme-color" content="#f8f4ec"><title>待办清单</title><style>${css}</style></head><body><a class="skip" href="#main">跳到任务内容</a><div id="app"></div><script>${js}</script></body></html>`;
+await writeFile('dist/index.html',html);
+await writeFile('dist/statistics.html',html.replace('<body>','<body><script>location.hash="statistics";</script>'));
+await copyFile('manifest.json','dist/plugin/manifest.json');await writeFile('dist/plugin/styles.css',await readFile('src/adapters/obsidian/workspace.css','utf8')+'\n'+statisticsCss+'\n'+themeCss);
+console.log('Built dist/index.html (offline) and dist/plugin (standalone task manager; local persistent data; no Kanban dependency).');

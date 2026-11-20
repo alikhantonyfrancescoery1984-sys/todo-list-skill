@@ -1,0 +1,39 @@
+import { fingerprint, type Note, type Task, type Config } from './model';
+export function extractTasks(note: Note, previous: Task[] = []): Task[] {
+  const found: {text:string; line:number; done:boolean; blockId?:string}[] = [];
+  let fence = '', frontmatter = false, comment = false;
+  for (const [line, raw] of note.text.split(/\r?\n/).entries()) {
+    if (line === 0 && raw.trim() === '---') { frontmatter = true; continue; }
+    if (frontmatter) { if (raw.trim() === '---') frontmatter = false; continue; }
+    const marker = raw.match(/^\s{0,3}(`{3,}|~{3,})/);
+    if (marker) { const m=marker[1]!; if (!fence) fence=m; else if (m[0]===fence[0] && m.length>=fence.length) fence=''; continue; }
+    if (fence) continue;
+    if (raw.includes('%%')) { if ((raw.match(/%%/g)?.length??0)%2) comment=!comment; continue; }
+    if (raw.includes('<!--')) { comment=!raw.includes('-->'); continue; }
+    if (comment) { if (raw.includes('-->')) comment=false; continue; }
+    const m=raw.match(/^\s*[-*+]\s+\[([ xX])\]\s+(.+)$/); if(!m) continue;
+    const block=m[2]!.match(/\s+\^([a-zA-Z0-9-]+)\s*$/);
+    found.push({text:m[2]!.replace(/\s+\^[a-zA-Z0-9-]+\s*$/,'').trim(),line,done:m[1]!==' ',blockId:block?.[1]});
+  }
+  const norm=(s:string)=>s.trim().replace(/\s+/g,' ');
+  const previousHere=previous.filter(t=>t.noteId===note.id);
+  const seen=new Map<string,number>();
+  return found.map(f=>{
+    const text=norm(f.text), occurrence=seen.get(text)??0;seen.set(text,occurrence+1);
+    const same=previousHere.filter(t=>norm(t.text)===text);
+    const duplicate=found.filter(t=>norm(t.text)===text).length>1;
+    const oldAtLine=previousHere.find(t=>t.line===f.line&&!found.some(n=>norm(n.text)===norm(t.text)));
+    const blockMatch=f.blockId?previousHere.find(t=>t.blockId===f.blockId):undefined;
+    const generated=f.blockId?`task-${fingerprint(note.id)}-b-${f.blockId}`:`task-${fingerprint(note.id)}-${fingerprint(text)}-${occurrence}`;
+    const duplicateBlock=!!f.blockId&&found.filter(t=>t.blockId===f.blockId).length>1;
+    return {...f,noteId:note.id,id:blockMatch?.id??(!duplicate&&same.length===1?same[0]!.id:generated),ambiguous:duplicateBlock||(!f.blockId&&(duplicate||!!oldAtLine))};
+  });
+}
+export function classify(path:string,columns:string[],config:Config):string {
+  const hit=Object.entries(config.columnMap).sort((a,b)=>b[0].length-a[0].length).find(([prefix])=>path.startsWith(prefix));
+  if(hit&&columns.includes(hit[1]))return hit[1];
+  const normalize=(s:string)=>s.toLowerCase().replace(/[\s-]/g,'');
+  for(const dir of path.split('/').slice(0,-1).reverse()){const match=columns.find(c=>normalize(c)===normalize(dir));if(match)return match;}
+  if(columns.includes(config.fallback))return config.fallback;
+  throw new Error('缺少目标列和 processing 兜底列，请确认看板结构。');
+}

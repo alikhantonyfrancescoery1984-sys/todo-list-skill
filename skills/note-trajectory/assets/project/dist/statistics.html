@@ -1,0 +1,1844 @@
+<!doctype html><html lang="zh-CN" data-type="software"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="page-type" content="software"><meta name="site-kind" content="software"><meta name="description" content="本地待办清单预览"><meta name="theme-color" content="#f8f4ec"><title>待办清单</title><style>:root{--paper:#f8f4ec;--ink:#161a1b;--muted:#65675f;--rule:#c9c7c2;--blue:#0b3b50;--orange:#dc510e;--ease:cubic-bezier(.23,1,.32,1);font-family:"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;color:var(--ink);background:var(--paper);font-synthesis:none;line-height:1.6;font-size:16px;color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;touch-action:manipulation}
+button:disabled{cursor:not-allowed}
+svg{flex-shrink:0}
+button{border:0;background:none}
+h1,h2,h3,p{margin:0}
+a{color:var(--blue);text-underline-offset:4px}
+button,input,select,textarea{outline-offset:5px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--orange)}
+::selection{background:#c1e2ed}
+*{scrollbar-color:#8c948e var(--paper);scrollbar-width:thin}
+button:disabled{opacity:.45}
+button:active:not(:disabled){opacity:.7}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.skip{position:fixed;top:12px;left:20px;z-index:50;padding:12px;background:var(--paper);transform:translateY(-200%)}
+.skip:focus{transform:none}
+.topbar,.workspace-view,.statistics-view,.page-footer,.workbench{width:min(1200px,100%);margin-inline:auto;padding-inline:48px}
+.topbar{height:104px;display:flex;justify-content:space-between;align-items:center;gap:24px}
+.identity{display:flex;align-items:center;gap:24px;min-width:0}
+h1{font-size:20px;font-weight:500;letter-spacing:.06em}
+.date-caption{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.06em}
+.quiet-button,.primary-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:8px 16px;border-radius:6px;border:1px solid var(--rule);transition:background-color .16s var(--ease),color .16s var(--ease)}
+.primary-button{background:var(--blue);color:var(--paper);border-color:var(--blue)}
+.stats-entry{border:0;font-size:15px;letter-spacing:.08em;padding-right:0}
+.icon-button{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:6px;flex-shrink:0}
+.text-button{min-height:44px;padding:6px 0;color:var(--blue);text-align:left}
+.text-button:hover{text-decoration:underline;text-underline-offset:5px}
+.tasks-section{margin-top:56px;margin-bottom:40px}
+.disclosure-heading{display:flex;align-items:center;gap:8px}
+.disclosure-heading .icon-button{margin-left:-10px}
+.disclosure-heading svg{transition:transform .28s var(--ease)}
+[aria-expanded=true] svg{transform:rotate(180deg)}
+.tasks-label{font-size:24px;opacity:0;transition:opacity .18s var(--ease)}
+.tasks-label.shown{opacity:1}
+.disclosure{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .28s var(--ease),opacity .18s var(--ease)}
+.disclosure.open{grid-template-rows:1fr;opacity:1}
+.disclosure-inner{overflow:hidden;min-height:0}
+.task-list{list-style:none;padding:0;margin:0}
+.task-item{display:flex;align-items:center;gap:12px;min-height:78px;padding-block:8px}
+.task-copy{flex:1;min-width:0}
+.task-copy>span{font-size:18px;overflow-wrap:anywhere}
+.task-copy small{display:block;font-size:12px;color:var(--muted);margin-top:3px}
+.task-item.done .task-copy>span{text-decoration:line-through;color:var(--muted)}
+input[type=checkbox]{appearance:none;width:44px;height:44px;flex:0 0 44px;position:relative;cursor:pointer;margin:0;background:none;border:0}
+input[type=checkbox]::before{content:"";position:absolute;inset:11px;border:1px solid var(--ink);border-radius:3px}
+input[type=checkbox]:checked::after{content:"";position:absolute;left:18px;top:13px;width:7px;height:13px;border:solid var(--blue);border-width:0 2px 2px 0;transform:rotate(45deg)}
+input[type=checkbox]:disabled{opacity:.35;cursor:not-allowed}
+.note-link{display:inline-flex;align-items:center;gap:8px;color:var(--muted);min-height:44px;max-width:200px;font-size:14px;text-align:left}
+.note-link span{text-decoration:underline;text-underline-offset:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note-link svg{width:20px;height:20px}
+.page-footer{display:flex;justify-content:space-between;align-items:center;gap:24px;padding-block:16px 32px;color:var(--muted);font-size:12px}
+.page-footer .text-button{font-size:12px;color:var(--muted)}
+.toast{position:fixed;z-index:20;bottom:24px;left:50%;transform:translate(-50%,12px);max-width:min(600px,calc(100% - 40px));padding:12px 20px;border-radius:8px;background:var(--blue);color:var(--paper);font-size:14px;opacity:0;pointer-events:none;transition:opacity .16s var(--ease),transform .16s var(--ease)}
+.toast.visible{opacity:1;transform:translate(-50%,0)}
+.toast[data-error=true]{background:#723b24}
+.empty{padding-block:24px;color:var(--muted)}
+.workbench{padding-block:32px 64px;border-top:1px solid var(--rule)}
+.workbench[hidden]{display:none}
+.workbench-title{display:flex;align-items:baseline;gap:24px;margin-bottom:32px}
+.workbench h2{font-size:20px;font-weight:400}
+.workbench h3{font-size:15px;font-weight:500;margin-top:28px}
+.workbench-title>span{font-size:13px;color:var(--muted)}
+.workbench-grid{display:grid;grid-template-columns:1fr 1fr;gap:48px}
+.workbench-grid>div{min-width:0}
+.workbench label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+.workbench textarea,.workbench select{width:100%;background:#fcf9f3;border:1px solid var(--rule);border-radius:6px;padding:12px;font-size:14px;line-height:1.8}
+.workbench textarea{resize:vertical;margin-top:0;caret-color:var(--orange)}
+.workbench select{margin-bottom:20px;min-height:44px}
+.workbench output{display:block;font-size:24px;font-variant-numeric:tabular-nums;margin-bottom:24px}
+.action-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.action-row button{font-size:13px}
+.board-preview{margin-top:32px}
+.board-preview summary{cursor:pointer;min-height:44px;font-size:14px}
+.board-preview pre{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;padding:24px;background:#f0ece4;border-radius:8px}
+@media(hover:hover) and (pointer:fine){.quiet-button:hover{background:#ede8dd}
+.stats-entry:hover{background:none;color:var(--orange)}
+.interval:hover .interval-line{background:var(--orange)}
+.week-day:hover .week-bar{background:var(--orange)}
+.icon-button:hover{background:#ede8dd}
+}
+@media(max-width:1023px){.topbar,.workspace-view,.statistics-view,.page-footer,.workbench{padding-inline:32px}
+.stats-columns{gap:40px}
+.section-heading{flex-wrap:wrap}
+.identity{gap:16px}
+.stat-summary{gap:16px}
+.stat-summary strong.duration{font-size:22px}
+}
+@media(max-width:640px){:root{}
+.topbar,.workspace-view,.statistics-view,.page-footer,.workbench{padding-inline:24px}
+.topbar{height:88px;gap:12px}
+.identity{gap:12px}
+h1{font-size:17px}
+.date-caption{font-size:11px}
+.stats-entry{font-size:13px;gap:4px}
+.tasks-section{margin-top:36px;margin-bottom:24px}
+.task-copy>span{font-size:16px}
+.task-item{gap:4px}
+.note-link{max-width:104px;gap:4px;font-size:12px}
+.note-link svg{width:16px}
+.task-copy small{font-size:11px}
+.page-footer{gap:12px;align-items:center;font-size:10px;padding-bottom:32px}
+.page-footer .text-button{font-size:11px}
+.statistics-view{padding-top:8px}
+.statistics-view .stat-summary{grid-template-columns:1fr 1fr;gap:28px;padding-bottom:32px}
+.stat-summary strong{font-size:30px}
+.stat-summary strong.duration{font-size:23px;margin-top:16px}
+.date-control{gap:0}
+.date-control .icon-button{width:36px}
+.date-control input{max-width:128px;font-size:12px}
+.section-heading h2{font-size:18px}
+.section-heading>span{font-size:11px}
+.daily-section{padding-top:32px}
+.stats-columns{grid-template-columns:1fr;gap:32px;margin-top:32px}
+.week-chart{gap:4px}
+.week-day{min-width:28px}
+.details-section{margin-top:36px}
+.workbench-grid{grid-template-columns:1fr;gap:32px}
+.workbench-title{display:block}
+.workbench-title>span{display:block;margin-top:8px}
+.toast{bottom:16px;font-size:12px}
+.empty-stat{padding:40px 16px}
+.empty-stat p{font-size:16px}
+.empty-stat span{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important}
+.disclosure{transition:opacity .12s linear}
+.tasks-label,.toast{transition:opacity .12s linear}
+.toast{transform:translateX(-50%)}
+.toast.visible{transform:translateX(-50%)}
+.disclosure-heading svg{transition:none}
+}
+@media(max-width:400px){.topbar:has(.date-control){height:auto;min-height:104px;flex-wrap:wrap;padding-block:16px;gap:8px}
+.date-control{margin-left:auto}
+}
+@media(max-width:380px){.topbar,.workspace-view,.statistics-view,.page-footer,.workbench{padding-inline:20px}
+}
+
+.home-modules{padding-top:24px;padding-bottom:24px;border-bottom:1px solid var(--rule)}
+
+.note-workspace-statistics{padding-top:36px;padding-bottom:40px}.note-workspace-statistics .date-control{display:flex;align-items:center;gap:8px}.note-workspace-statistics .date-control input{background:none;border:0;font-size:14px;min-height:44px;max-width:150px;font-variant-numeric:tabular-nums}.note-workspace-statistics .previous svg{transform:rotate(90deg)}.note-workspace-statistics .next svg{transform:rotate(-90deg)}.note-workspace-statistics .stat-summary{display:grid;grid-template-columns:1fr 1fr 1.5fr 1fr;gap:32px;padding-block:16px 56px;border-bottom:1px solid var(--rule)}.note-workspace-statistics .stat-summary>div>span{color:var(--muted);font-size:14px;display:block}.note-workspace-statistics .stat-summary strong{display:flex;align-items:baseline;gap:10px;font-size:36px;font-weight:400;line-height:1.25;margin-top:12px;font-variant-numeric:tabular-nums}.note-workspace-statistics .stat-summary strong small{font-size:14px;font-weight:400;color:var(--muted)}.note-workspace-statistics .stat-summary strong.duration{font-size:27px;margin-top:19px;white-space:nowrap}.note-workspace-statistics .stat-summary em{font-size:11px;font-style:normal;margin-left:4px;color:var(--muted)}.note-workspace-statistics .daily-section{padding-top:48px}.note-workspace-statistics .section-heading{display:flex;justify-content:space-between;align-items:baseline;gap:16px;margin-bottom:24px}.note-workspace-statistics .section-heading h2{font-size:20px;font-weight:400;letter-spacing:.03em}.note-workspace-statistics .section-heading>span{font-size:12px;color:var(--muted)}.note-workspace-statistics .empty-stat{padding:64px 24px;text-align:center;background:#f2eee6;border-radius:8px}.note-workspace-statistics .empty-stat p{font-size:18px;margin-bottom:8px}.note-workspace-statistics .empty-stat span{color:var(--muted);font-size:14px}.note-workspace-statistics .stats-columns{display:grid;grid-template-columns:1fr 1fr;gap:80px;margin-top:48px}.note-workspace-statistics .module-list{list-style:none;padding:0;margin:0}.note-workspace-statistics .module-list li{margin-bottom:22px}.note-workspace-statistics .module-list li>div:first-child{display:flex;justify-content:space-between;gap:16px;font-size:14px}.note-workspace-statistics .module-list li>div:first-child>span:last-child{font-size:12px;color:var(--muted)}.note-workspace-statistics .module-track{height:3px;background:#e5dfd5;margin-top:10px}.note-workspace-statistics .module-track>span{height:100%;display:block;background:var(--blue)}.note-workspace-statistics .week-chart{height:150px;display:flex;gap:8px;align-items:flex-end;justify-content:space-between}.note-workspace-statistics .week-day{flex:1;min-width:32px;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;color:var(--muted);font-size:11px;padding:4px 0}.note-workspace-statistics .week-bar{display:block;width:16px;min-height:2px;background:#aabfc2;border-radius:2px}.note-workspace-statistics .week-day.current .week-bar{background:var(--blue)}.note-workspace-statistics .week-value{font-size:10px}.note-workspace-statistics .details-section{margin-top:56px}.note-workspace-statistics .table-scroll{overflow:auto}.note-workspace-statistics table{width:100%;border-collapse:collapse;font-size:13px;text-align:left;white-space:nowrap}.note-workspace-statistics th{font-weight:400;color:var(--muted);font-size:12px}.note-workspace-statistics td,.note-workspace-statistics th{padding:14px 16px 14px 0;border-bottom:1px solid #e1ddd4}.note-workspace-statistics td:first-child{font-variant-numeric:tabular-nums}.note-workspace-statistics td .text-button{min-height:32px;font-size:13px}.note-workspace-statistics .data-note{font-size:12px;line-height:1.7;color:var(--muted);margin-top:16px}
+.note-workspace-statistics{container-type:inline-size;container-name:nt-stats;min-width:0;color:var(--ink);font-size:14px}
+.note-workspace-statistics strong,.note-workspace-statistics b{color:var(--ink)!important}
+.note-workspace-statistics .section-heading h2{color:var(--ink)!important;margin:0;font-weight:400}
+.note-workspace-statistics .text-button{background:none;border:0;box-shadow:none;color:var(--blue);text-align:left;padding:6px 0;cursor:pointer}
+.note-workspace-statistics .week-day{background:none;border:0;box-shadow:none;min-height:44px;cursor:pointer}
+.note-workspace-statistics .statistics-date-control{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:24px}
+.note-workspace-statistics .statistics-date-control button{min-width:44px;min-height:44px;font-size:22px}
+.note-workspace-statistics .statistics-date-control input{min-height:44px;max-width:156px;background:none;color:inherit;border:1px solid var(--rule);padding:4px 8px;border-radius:4px;font:inherit}
+.note-workspace-statistics .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+@container nt-stats (max-width:640px){
+ .note-workspace-statistics .stat-summary{grid-template-columns:1fr 1fr;gap:24px;padding-bottom:32px}
+ .note-workspace-statistics .stat-summary strong{font-size:28px}
+ .note-workspace-statistics .stat-summary strong.duration{font-size:22px;margin-top:16px}
+ .note-workspace-statistics .section-heading{flex-wrap:wrap;gap:8px}
+ .note-workspace-statistics .section-heading h2{font-size:18px}
+ .note-workspace-statistics .daily-section{padding-top:32px}
+ .note-workspace-statistics .stats-columns{grid-template-columns:1fr;gap:32px;margin-top:32px}
+ .note-workspace-statistics .table-scroll{max-width:100%;overflow:auto}
+ .note-workspace-statistics .week-chart{gap:4px}
+ .note-workspace-statistics .week-day{min-width:24px}
+ .note-workspace-statistics .details-section{margin-top:36px}
+ .note-workspace-statistics .empty-stat{padding:40px 16px}
+}
+@media(prefers-reduced-motion:reduce){}
+
+:where(.tasks-section,.note-workspace-host) .task-filters{display:flex;gap:20px;align-items:center;margin:8px 0 16px;border-bottom:1px solid var(--rule,#c9c7c2)}
+:where(.tasks-section,.note-workspace-host) .task-filters button{min-height:44px;font:inherit;font-size:13px;padding:8px 0;color:var(--muted,#65675f);border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none}
+:where(.tasks-section,.note-workspace-host) .task-filters button[aria-pressed=true]{color:var(--blue,#0b3b50);border-bottom-color:currentColor}
+:where(.tasks-section,.note-workspace-host) .task-copy small:empty{display:none}
+:where(.tasks-section,.note-workspace-host) .source-unavailable{font-size:12px;color:var(--muted,#65675f)}
+#app>.storage-error,.note-workspace-host .storage-error{width:min(1104px,calc(100% - 48px));margin:16px auto;padding:12px 16px;border:1px solid #b85a31;color:#7c361b;font-size:13px}
+.nt-import-dialog{max-width:min(520px,calc(100% - 40px));padding:28px;border:1px solid #c9c7c2;border-radius:12px;background:#f8f4ec;color:#161a1b;font:inherit;box-shadow:0 16px 60px #161a1b24}
+.nt-import-dialog::backdrop{background:#161a1b55}
+.nt-import-dialog h2{font-size:20px;font-weight:500;margin-bottom:16px}
+.nt-import-dialog p{font-size:14px;line-height:1.8;margin:12px 0;overflow-wrap:anywhere}
+.nt-import-dialog .action-row{justify-content:flex-end;margin-top:24px}
+:where(.tasks-section,.note-workspace-host) .readonly-tasks>li.task-file-container{display:block;margin:0;padding:0;list-style:none}
+:where(.tasks-section,.note-workspace-host) details.task-file-group{margin:8px 0 12px;min-width:0;font-size:inherit;border-bottom:1px solid var(--rule,#c9c7c2)}
+:where(.tasks-section,.note-workspace-host) .task-file-group>summary{display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0;cursor:pointer;list-style:none}
+:where(.tasks-section,.note-workspace-host) .task-file-group>summary::-webkit-details-marker{display:none}
+:where(.tasks-section,.note-workspace-host) .task-file-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+:where(.tasks-section,.note-workspace-host) .task-file-count{font-size:12px;color:var(--muted,#65675f);white-space:nowrap}
+:where(.tasks-section,.note-workspace-host) .task-file-chevron{flex-shrink:0;transform:rotate(0deg)}
+:where(.tasks-section,.note-workspace-host) .task-file-group[open]>summary .task-file-chevron{transform:rotate(180deg)}
+:where(.tasks-section,.note-workspace-host) .task-file-link,:where(.tasks-section,.note-workspace-host) .compact-source-link{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-height:44px;max-width:none;color:var(--blue,#0b3b50)}
+:where(.tasks-section,.note-workspace-host) .task-file-children{padding-left:12px;margin:0 0 12px}
+:where(.tasks-section,.note-workspace-host) .task-file-group:not([open])>.task-file-children{display:none}
+:where(.tasks-section,.note-workspace-host) .task-file-group summary:focus-visible{outline:2px solid #dc510e;outline-offset:3px}
+
+/* Shared visual system: scoped to the operational workspace and its task editor. */
+.note-workspace-root{--paper:#faf9f4;--ink:#1f241f;--muted:#5e665d;--rule:#dcded4;--blue:#244c43;--orange:#ad461c;--surface:#fff;--mint:#e5edce;--aqua:#dceceb;--cream:#f6edb8;--nt-paper:#faf9f4;--nt-ink:#1f241f;--nt-blue:#244c43;--nt-line:#dcded4;--m-in:150ms;--m-press:90ms;--m-panel:200ms;--ease:cubic-bezier(.2,.8,.2,1);color:var(--ink);font-family:"PingFang SC","Noto Sans SC",system-ui,sans-serif;line-height:1.6;color-scheme:light}
+.note-workspace-root *{box-sizing:border-box}
+.note-workspace-root button,.note-workspace-root input,.note-workspace-root textarea{font:inherit}
+.note-workspace-root button{transition:background-color var(--m-in) var(--ease),color var(--m-in) var(--ease),transform var(--m-press) var(--ease);cursor:pointer;touch-action:manipulation}
+.note-workspace-root button:active:not(:disabled){transform:translateY(1px) scale(.985)}
+.note-workspace-root :is(button,a,input,textarea,summary):focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.note-workspace-root .topbar,.note-workspace-root>header{min-height:88px;height:auto;padding-block:24px;gap:16px}
+.note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:22px;font-weight:600!important;letter-spacing:-.035em;color:var(--ink)!important}
+.note-workspace-root .identity{gap:16px;flex-wrap:wrap}
+.note-workspace-root .date-caption{font-size:12px;letter-spacing:.02em}
+.note-workspace-root .stats-entry,.note-workspace-host header>button{border:0;background:var(--ink);color:var(--paper);border-radius:999px;min-height:44px;padding:8px 20px;font-size:13px;white-space:nowrap}
+.note-workspace-root .home-modules{padding:0 0 24px;border:0}
+.note-workspace-root .module-card{padding:24px;background:var(--mint);border-radius:24px;min-width:0}
+.note-workspace-root .module-card .section-heading{margin-bottom:16px;gap:8px}
+.note-workspace-root .module-card .section-heading h2{font-size:18px;font-weight:500;letter-spacing:-.02em}
+.note-workspace-root .module-card .section-heading>span{font-size:12px;color:#4d5945}
+.note-workspace-root .module-total{display:flex;align-items:baseline;gap:12px;justify-content:space-between;margin-bottom:28px}
+.note-workspace-root .module-total strong{font-size:30px;font-weight:500;letter-spacing:-.045em;line-height:1.25;font-variant-numeric:tabular-nums}
+.note-workspace-root .module-total>span{font-size:12px;white-space:nowrap;color:#4d5945}
+.note-workspace-root .module-list li{margin-bottom:20px}
+.note-workspace-root .module-list li>div:first-child{font-size:15px;align-items:baseline;gap:12px}
+.note-workspace-root .module-list li>div:first-child>span:last-child{font-size:12px;color:#4d5945;text-align:right}
+.note-workspace-root .module-track{height:6px;background:#ccd6b6;border-radius:999px;overflow:hidden;margin-top:10px}
+.note-workspace-root .module-track>span{background:#3e5d40;border-radius:999px;min-height:6px}
+.note-workspace-root .module-list li:nth-child(3n+2) .module-track>span{background:#28655f}
+.note-workspace-root .module-list li:nth-child(3n) .module-track>span{background:#6a6238}
+.note-workspace-root details.module-provenance{margin:8px 0 0;font-size:12px;color:#4d5945}
+.note-workspace-root .module-provenance>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.note-workspace-root .module-provenance>p{padding:8px 0 0;font-size:12px;line-height:1.8}
+.note-workspace-root .tasks-section{margin-top:8px}
+.note-workspace-root .disclosure-heading,.note-workspace-host .readonly-disclosure{gap:8px;margin:0 0 8px}
+.note-workspace-root .tasks-label,.note-workspace-root .tasks-heading{font-size:18px;font-weight:500}
+.note-workspace-root .task-filters{display:flex;gap:8px;border:0;margin:8px 0 16px;padding:4px;background:#eceee5;border-radius:999px;max-width:100%;width:max-content}
+.note-workspace-root .task-filters button{padding:8px 16px;border:0;border-radius:999px;min-width:86px;min-height:44px;color:var(--muted);font-size:13px}
+.note-workspace-root .task-filters button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.note-workspace-root .task-list{padding:0;margin:0;list-style:none}
+.note-workspace-root .task-item{display:flex;align-items:center;gap:8px;min-height:76px;padding:8px;border-radius:16px;margin:4px 0;transition:background-color var(--m-in) var(--ease)}
+.note-workspace-root .task-copy{flex:1;min-width:0}
+.note-workspace-root .task-title-button{display:block;border:0;background:none;box-shadow:none;padding:8px 0;min-height:44px;width:100%;color:var(--ink);text-align:left;font-size:16px;line-height:1.6;overflow-wrap:anywhere;border-radius:6px}
+.note-workspace-root .task-item.done .task-title-button{text-decoration:line-through;color:var(--muted)}
+.note-workspace-root .task-copy small{font-size:12px;color:var(--muted);display:block}
+.note-workspace-root .manual-task-label{font-size:12px;flex:0 0 auto;color:var(--muted);padding:4px 10px;border-radius:999px;background:#eceee5}
+.note-workspace-root .note-link{max-width:28%;font-size:12px;gap:6px;color:var(--blue);line-height:1.5}
+.note-workspace-root .note-link span{text-underline-offset:4px}
+.note-workspace-root .task-item input[type=checkbox]{appearance:none!important;background:none;border:0;box-shadow:none;position:relative;flex:0 0 44px;width:44px;height:44px;margin:0;cursor:pointer;accent-color:var(--blue)}
+.note-workspace-root .task-item input[type=checkbox]::before{display:block!important;content:"";position:absolute;inset:11px;border:1.5px solid #70796b;border-radius:7px;transition:background-color 150ms var(--ease),border-color 150ms var(--ease)}
+.note-workspace-root .task-item input[type=checkbox]:checked::before{background:var(--blue);border-color:var(--blue)}
+.note-workspace-root .task-item input[type=checkbox]:checked::after{display:block!important;content:"";position:absolute;left:18px;top:14px;width:7px;height:12px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg);animation:task-tick 160ms var(--ease)}
+.note-workspace-root .task-create-button{display:flex;align-items:center;gap:12px;min-height:64px;width:100%;padding:12px 18px;margin-top:12px;border:1px dashed #b7bfad;border-radius:16px;color:var(--muted);background:transparent;text-align:left;font-size:14px}
+.note-workspace-root .task-create-button>span:first-child{font-size:24px;line-height:1}
+.note-workspace-root .task-blank-area{height:80px;cursor:text}
+.note-workspace-root .task-file-group{background:var(--surface);border:1px solid #e0e3d8!important;border-radius:18px;margin:12px 0!important;overflow:hidden}
+.note-workspace-root .task-file-group>summary{padding:10px 12px!important;gap:8px;min-height:64px}
+.note-workspace-root .task-file-title{font-size:14px}
+.note-workspace-root .task-file-chevron{transition:transform 180ms var(--ease)}
+.note-workspace-root .task-file-children{padding:0 8px!important}
+.note-workspace-root .task-undo{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 16px;border-radius:14px;background:var(--cream);font-size:13px;animation:task-panel-in var(--m-panel) var(--ease)}
+.note-workspace-root .task-undo button{min-height:44px;color:var(--blue);font-weight:500}
+.note-workspace-root .statistics-view{padding-top:8px}
+.note-workspace-root .stat-summary{gap:16px;border:0;padding:0 0 24px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.note-workspace-root .stat-summary>div{padding:20px;border-radius:20px;background:var(--surface)}
+.note-workspace-root .stat-summary>div:nth-child(2){background:var(--cream)}
+.note-workspace-root .stat-summary>div:nth-child(3){background:var(--aqua)}
+.note-workspace-root .stat-summary>div>span{font-size:12px}
+.note-workspace-root .stat-summary strong{font-size:30px;font-weight:500;margin-top:8px;gap:8px}
+.note-workspace-root .stat-summary strong.duration{font-size:23px;white-space:normal;margin-top:12px}
+.note-workspace-root .stats-columns{display:block;margin-top:16px}
+.note-workspace-root .stats-columns>section{padding:24px;border-radius:24px;background:var(--surface)}
+.note-workspace-root .week-chart{height:160px}
+.note-workspace-root .week-bar{border-radius:999px;background:#c3d2bc;width:22px}
+.note-workspace-root .week-day.current .week-bar{background:var(--blue)}
+.note-workspace-root .details-section{margin-top:32px}
+.note-workspace-root .statistics-date-control button{border-radius:999px;background:#eceee5}
+.note-workspace-root .section-heading>span{font-size:12px}
+.note-workspace-root .page-footer{font-size:12px;gap:16px}
+.note-workspace-host>details:not([data-task-group]){margin-top:8px;color:var(--muted)}
+.note-workspace-root.task-editor-dialog{border:1px solid var(--rule);border-radius:24px;padding:24px;background:var(--paper)!important;color:var(--ink)!important;width:min(480px,calc(100vw - 32px));max-width:480px;animation:task-panel-in var(--m-panel) var(--ease);box-shadow:0 20px 80px #1f241f20}
+.note-workspace-root.task-editor-dialog::backdrop{background:#1f241f66}
+.note-workspace-root.task-editor-dialog h2,.note-workspace-root.task-editor-dialog .modal-title{font-size:20px;font-weight:500;color:var(--ink)!important;margin:0 0 24px}
+.note-workspace-root .task-editor-form label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+.note-workspace-root .task-editor-form textarea{resize:vertical;width:100%;min-height:112px;max-height:50vh;border:1px solid #bac2b3;border-radius:14px;background:var(--surface);color:var(--ink);padding:14px;font-size:16px;line-height:1.6;box-shadow:none}
+.note-workspace-root .editor-context{font-size:12px;color:var(--muted);line-height:1.7;margin:12px 0}
+.note-workspace-root .editor-error{color:#8e321c;font-size:13px;margin:12px 0}
+.note-workspace-root .editor-error[hidden]{display:none}
+.note-workspace-root .editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:24px;flex-wrap:wrap}
+.note-workspace-root .editor-actions button{border:0;border-radius:999px;min-height:44px;padding:8px 16px;background:#e9ece2;color:var(--ink);font-size:14px}
+.note-workspace-root .editor-actions .save-task{background:var(--ink);color:var(--paper)}
+.note-workspace-root .editor-actions .delete-task{margin-right:auto;background:none;color:#953c28}
+.note-workspace-root .editor-actions button:disabled{opacity:.5;cursor:wait}
+@keyframes task-panel-in{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes task-tick{from{opacity:0;scale:.7}to{opacity:1;scale:1}}
+@media(hover:hover) and (pointer:fine){.note-workspace-root button:hover:not(:disabled):not(:active){transform:translateY(-1px)}.note-workspace-root .task-item:hover{background:#edf0e4}.note-workspace-root .task-create-button:hover{background:#e9eddf;color:var(--ink)}.note-workspace-root .task-title-button:hover{color:var(--blue)}.note-workspace-root .note-link:hover{color:var(--ink)}}
+@media(max-width:640px){.note-workspace-root .module-card{padding:20px;border-radius:22px}.note-workspace-root .module-total strong{font-size:27px}.note-workspace-root .stat-summary>div{padding:16px}.note-workspace-root .stat-summary strong.duration{font-size:20px}.note-workspace-root .module-list li>div:first-child>span:last-child{max-width:60%}.note-workspace-root .stats-columns>section{padding:20px}.note-workspace-root .topbar h1{font-size:20px}.note-workspace-root .task-item{padding-inline:0;gap:4px}}
+@media(prefers-reduced-motion:reduce){.note-workspace-root,.note-workspace-root *,.note-workspace-root *::before,.note-workspace-root *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.note-workspace-root button:hover,.note-workspace-root button:active{transform:none!important}}
+
+.note-workspace-root .task-add-header{margin-left:auto;border:0;border-radius:50%;width:44px;min-height:44px;padding:0;background:var(--cream);font-size:24px;color:var(--ink)}
+
+.note-workspace-root .disclosure-heading .icon-button{margin-left:0}
+
+#app.note-workspace-root{min-height:100vh;background:var(--paper)}
+/* M010: respond to the actual plugin pane, not the application window. */
+.note-workspace-root{container-type:inline-size;container-name:todo-pane;min-width:0}
+.note-workspace-root .topbar h1,.note-workspace-host header>strong{white-space:nowrap;line-height:1.3}
+.note-workspace-root .module-meta{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 6px;min-width:0}
+.note-workspace-root .module-meta>span{white-space:nowrap}
+.note-workspace-root .module-total strong{white-space:nowrap;word-break:keep-all;overflow-wrap:normal}
+@container todo-pane (max-width:540px){
+ .note-workspace-root .topbar,.note-workspace-root .workspace-view,.note-workspace-root .statistics-view,.note-workspace-root .page-footer,.note-workspace-root .workbench{width:100%;padding-inline:16px}
+ .note-workspace-host .statistics-view{padding-inline:0}
+ .note-workspace-root .module-total{flex-wrap:wrap;gap:8px}
+ .note-workspace-root .stat-summary{gap:10px}
+ .note-workspace-root .section-heading{flex-wrap:wrap}
+}
+@container todo-pane (max-width:360px){
+ .note-workspace-root .topbar,.note-workspace-root .workspace-view,.note-workspace-root .statistics-view,.note-workspace-root .page-footer,.note-workspace-root .workbench{padding-inline:12px}
+ .note-workspace-host .statistics-view{padding-inline:0}
+ .note-workspace-root .topbar,.note-workspace-host>header{min-height:68px;padding-block:12px;gap:8px}
+ .note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:18px;flex:0 0 auto}
+ .note-workspace-root .identity{gap:4px 8px;min-width:0}
+ .note-workspace-root .date-caption{font-size:11px}
+ .note-workspace-root .stats-entry,.note-workspace-host header>button{min-width:56px;min-height:44px;padding:6px 12px;font-size:12px;flex:0 0 auto}
+ .note-workspace-root .module-card{padding:16px;border-radius:20px}
+ .note-workspace-root .module-card .section-heading{gap:4px}
+ .note-workspace-root .module-card .section-heading h2{font-size:17px}
+ .note-workspace-root .module-card .section-heading>span{font-size:12px}
+ .note-workspace-root .module-total{flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:22px}
+ .note-workspace-root .module-total strong{font-size:clamp(18px,8cqi,26px)}
+ .note-workspace-root .module-list li>div:first-child{flex-direction:column;align-items:flex-start;gap:4px;font-size:14px}
+ .note-workspace-root .module-list li>div:first-child>span:last-child{max-width:100%;text-align:left;font-size:12px}
+ .note-workspace-root .module-meta{justify-content:flex-start}
+ .note-workspace-root .module-provenance>p{overflow-wrap:anywhere}
+ .note-workspace-root .task-filters{width:100%;gap:4px;padding:4px}
+ .note-workspace-root .task-filters button{min-width:0;flex:1 1 0;padding:8px 6px;font-size:12px;white-space:nowrap}
+ .note-workspace-root .task-file-group>summary{display:grid;grid-template-columns:minmax(0,1fr) 20px 44px;gap:4px 8px;padding:8px!important}
+ .note-workspace-root .task-file-title{grid-column:1/-1;grid-row:1;width:100%;max-width:100%;font-size:14px;white-space:normal;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .note-workspace-root .task-file-count{grid-column:1;grid-row:2;font-size:12px}
+ .note-workspace-root .task-file-chevron{grid-column:2;grid-row:2}
+ .note-workspace-root .task-file-link{grid-column:3;grid-row:2}
+ .note-workspace-root .note-link{width:44px;max-width:44px;flex:0 0 44px;justify-content:center}
+ .note-workspace-root .note-link span{display:none}
+ .note-workspace-root .task-item{gap:4px}
+ .note-workspace-root .task-title-button{font-size:14px}
+ .note-workspace-root .task-create-button{font-size:13px;padding-inline:12px}
+ .note-workspace-root .page-footer{flex-direction:column;align-items:flex-start;gap:4px}
+ .note-workspace-root .stat-summary{grid-template-columns:minmax(0,1fr);gap:10px}
+ .note-workspace-root .stat-summary>div{padding:16px}
+ .note-workspace-root .week-chart{gap:2px}
+ .note-workspace-root .week-day{min-width:0;font-size:10px}
+ .note-workspace-root .week-bar{width:14px}
+ .note-workspace-root .week-value{font-size:9px}
+ .note-workspace-root .stats-columns>section{padding:16px}
+ .note-workspace-root .statistics-date-control{justify-content:flex-start;gap:4px}
+ .note-workspace-root .statistics-date-control input{min-width:0;max-width:132px}
+ .note-workspace-root .editor-actions{gap:6px}
+ .note-workspace-root .editor-actions button{padding-inline:12px}
+}
+@container todo-pane (max-width:260px){
+ .note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:16px}
+ .note-workspace-root .module-card{padding:12px;border-radius:18px}
+ .note-workspace-root .module-card .section-heading{align-items:flex-start;flex-direction:column}
+ .note-workspace-root .module-card .section-heading h2{font-size:16px}
+ .note-workspace-root .module-total strong{font-size:18px}
+ .note-workspace-root .module-total>span{font-size:11px}
+ .note-workspace-root .readonly-tasks .task-item{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:start;gap:0 4px}
+ .note-workspace-root .task-item>input{grid-column:1;grid-row:1}
+ .note-workspace-root .task-item>.task-copy{grid-column:2;grid-row:1}
+ .note-workspace-root .task-item>.note-link,.note-workspace-root .task-item>.manual-task-label{grid-column:2;grid-row:2;justify-self:end}
+ .note-workspace-root .statistics-date-control{flex-wrap:wrap}
+ .note-workspace-root .week-bar{width:10px}
+ .note-workspace-root .week-day{font-size:9px}
+ .note-workspace-root .week-value{font-size:8px}
+}
+
+@container todo-pane (max-width:360px){.note-workspace-root .week-month{display:none}.note-workspace-root .week-value{max-width:100%;overflow-wrap:anywhere;line-height:1.2}}
+/* Obsidian buttons default to nowrap; editable task titles must wrap inside the pane. */
+.note-workspace-root .task-title-button{white-space:normal;overflow-wrap:anywhere;word-break:normal}
+/* M011: source-labelled statistics, editable module tags and deadline planning. */
+.note-workspace-root .stat-summary [data-stat=duration]{grid-column:1/-1;background:var(--aqua)}
+.note-workspace-root .statistics-provenance{font-size:12px;color:var(--muted);margin:0 0 24px}
+.note-workspace-root .statistics-provenance summary{min-height:44px;cursor:pointer}
+.note-workspace-root .statistics-provenance p{line-height:1.8}
+.note-workspace-root .week-chart{align-items:stretch;height:160px}
+.note-workspace-root .week-day{height:100%;min-height:44px;justify-content:flex-end;min-width:0;padding-block:4px}
+.note-workspace-root .week-bar{flex:0 0 auto;min-height:0}
+.note-workspace-root .week-value,.note-workspace-root .week-date{flex:0 0 auto}
+.note-workspace-root .module-open{padding:4px 0;min-height:44px;max-width:100%;height:auto;border:0;border-radius:6px;background:none;box-shadow:none;color:var(--ink);font-size:15px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.note-workspace-root .hidden-module-list{font-size:12px;color:var(--muted);margin-top:8px}
+.note-workspace-root .hidden-module-list summary{cursor:pointer;min-height:44px}
+.note-workspace-root .hidden-module-list button{min-height:44px;padding:4px 8px;white-space:normal}
+.note-workspace-root .tag-preview,.note-workspace-root .task-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-width:0}
+.note-workspace-root .tag-preview-chip,.note-workspace-root .task-tags span{display:inline-block;max-width:100%;padding:3px 8px;border-radius:8px;background:var(--mint);color:#304a32;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.note-workspace-root .tag-preview-chip[data-tag-state=new]{background:var(--cream);color:#574714}
+.note-workspace-root .planning-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--rule)}
+.note-workspace-root .task-editor-form input:not([type=checkbox]),.note-workspace-root .task-editor-form select{box-sizing:border-box;min-width:0;width:100%;height:44px;min-height:44px;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid #bac2b3;border-radius:10px;padding:8px 10px;box-shadow:none}
+.note-workspace-root .task-editor-form input[readonly]{background:#eceee5;color:var(--muted)}
+.note-workspace-root .task-editor-form .reminder-enable{display:flex;align-items:center;gap:8px;min-height:44px;margin:0;color:var(--ink)}
+.note-workspace-root .task-editor-form input[type=checkbox]{appearance:auto;width:20px;height:20px;min-width:20px;margin:0;accent-color:var(--blue)}
+.note-workspace-root .reminder-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(70px,.65fr);gap:12px}
+.note-workspace-root .task-editor-form input:disabled,.note-workspace-root .task-editor-form select:disabled{opacity:.5}
+.note-workspace-root .deadline-clear{min-height:44px;height:auto;padding:4px 0;border:0;box-shadow:none;background:none;font-size:12px;color:var(--blue)}
+.note-workspace-root .module-view-tasks{min-height:44px;height:auto;padding:8px 14px;border:0;border-radius:999px;background:var(--mint);color:var(--ink);white-space:normal}
+.note-workspace-root .module-delete-confirm{padding:14px;margin-top:16px;border:1px solid #a34631;border-radius:14px;font-size:13px;color:#782e21}
+.note-workspace-root .module-delete-confirm[hidden]{display:none}
+.note-workspace-root .module-delete-confirm button{min-height:44px;height:auto;max-width:100%;white-space:normal;padding:8px 12px;margin-top:12px;border:0;border-radius:10px;color:#782e21;background:#f4ded8}
+.note-workspace-root .module-task-filter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:13px}
+.note-workspace-root .module-task-filter span{min-width:0;overflow-wrap:anywhere}
+.note-workspace-root .module-task-filter button{min-height:44px;white-space:normal;color:var(--blue)}
+.note-workspace-root .task-item.deadline-warning .task-title-button{color:#b3261e!important}
+.note-workspace-root .task-item[data-deadline-state=overdue] .task-title-button{text-decoration:underline;text-underline-offset:4px}
+.task-deadline-tooltip{position:fixed;z-index:10000;padding:10px 14px;border-radius:10px;background:#1f241f;color:#faf9f4;font-family:"PingFang SC",system-ui,sans-serif;font-size:13px;line-height:1.7;white-space:pre-line;overflow-wrap:anywhere;pointer-events:none;box-sizing:border-box;box-shadow:0 8px 30px #1f241f24}
+@container todo-pane (max-width:360px){.note-workspace-root .module-open{font-size:14px}.note-workspace-root .reminder-fields{gap:8px}.note-workspace-root .week-day{height:100%;min-height:44px}}
+
+/* M012: time-only descriptions never occupy a task row; explicit clickable AM/PM. */
+.note-workspace-root .task-time-description[hidden]{display:none!important}
+.note-workspace-root .deadline-time-fields{display:grid;grid-template-columns:minmax(92px,1.3fr) repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.note-workspace-root .deadline-time-fields label{min-width:0;margin:0}
+.note-workspace-root .deadline-time-fields select{cursor:pointer;appearance:auto}
+@media(max-width:380px){.note-workspace-root.task-editor-dialog{padding:18px}.note-workspace-root .deadline-time-fields{gap:8px}}
+</style></head><body><script>location.hash="statistics";</script><a class="skip" href="#main">跳到任务内容</a><div id="app"></div><script>"use strict";
+(() => {
+  var __defProp = Object.defineProperty;
+  var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+  var __publicField = (obj, key, value) => __defNormalProp(obj, typeof key !== "symbol" ? key + "" : key, value);
+
+  // src/ui/html.ts
+  var escapeHtml = (v) => String(v).replace(/[&<>"']/g, (c2) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c2]);
+
+  // src/ui/workspace/module-editor.ts
+  function moduleEditor(c2, module) {
+    const count = c2.moduleTaskCount(module.id);
+    return `<form class="task-editor-form module-editor-form"><label for="module-name">\u6A21\u5757\u540D\u79F0</label><input id="module-name" maxlength="80" value="${escapeHtml(module.name)}" ${module.kind === "source" ? 'readonly aria-readonly="true"' : ""}><p class="editor-context">${module.kind === "source" ? "\u540D\u79F0\u6765\u81EA\u7B14\u8BB0\u6587\u4EF6\u5939\u5206\u7C7B\uFF0C\u6B64\u5904\u4E0D\u53EF\u6539\u540D\uFF1B\u7B14\u8BB0\u6587\u4EF6\u548C\u6765\u6E90\u4EFB\u52A1\u4FDD\u7559\u3002" : "\u624B\u52A8\u6A21\u5757\u53EF\u91CD\u547D\u540D\uFF0C\u5DF2\u6709\u6807\u7B7E\u548C\u5F85\u529E\u4FDD\u6301\u5173\u8054\u3002"}</p><button type="button" class="module-view-tasks" data-module-action="view">\u67E5\u770B\u6B64\u6A21\u5757\u5F85\u529E</button><p class="editor-error" role="alert" hidden></p><div class="module-delete-confirm" hidden><p>\u5220\u9664\u6A21\u5757\u5E76\u5220\u9664\u5176\u4E2D ${count} \u6761\u624B\u52A8\u5F85\u529E\uFF1F\u7B14\u8BB0\u6587\u4EF6\u3001\u7B14\u8BB0\u5F85\u529E\u53CA\u5386\u53F2\u7EDF\u8BA1\u4FDD\u7559\u3002${module.kind === "source" ? "\u6B64\u7B14\u8BB0\u6A21\u5757\u5C06\u4ECE\u5206\u5E03\u9690\u85CF\u3002" : ""}</p><button type="button" class="delete-task" data-module-action="confirm-delete">\u786E\u8BA4\u5220\u9664\u6A21\u5757\u53CA ${count} \u6761\u624B\u52A8\u5F85\u529E</button></div><div class="editor-actions"><button type="button" class="delete-task" data-module-action="delete">\u5220\u9664\u6A21\u5757</button><button type="button" data-module-action="cancel">\u53D6\u6D88</button>${module.kind === "manual" ? '<button type="submit" class="save-task">\u4FDD\u5B58\u540D\u79F0</button>' : ""}</div></form>`;
+  }
+  function bindModuleEditor(root, c2, module, close, view, removed) {
+    const events = new AbortController(), form = root.querySelector("form"), error = form.querySelector(".editor-error");
+    let busy = false;
+    const run2 = async (fn) => {
+      if (busy) return;
+      busy = true;
+      for (const b of form.querySelectorAll("button")) b.disabled = true;
+      error.hidden = true;
+      try {
+        await fn();
+        close();
+      } catch (e) {
+        error.textContent = e instanceof Error ? e.message : String(e);
+        error.hidden = false;
+      } finally {
+        busy = false;
+        for (const b of form.querySelectorAll("button")) b.disabled = false;
+      }
+    };
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (module.kind === "manual") void run2(() => c2.renameModule(module.id, form.querySelector("#module-name").value));
+    }, { signal: events.signal });
+    form.addEventListener("click", (e) => {
+      const action = e.target.closest("[data-module-action]")?.dataset.moduleAction;
+      if (action === "cancel") close();
+      if (action === "view") {
+        view(module.id);
+        close();
+      }
+      if (action === "delete") {
+        form.querySelector(".module-delete-confirm").hidden = false;
+        form.querySelector("[data-module-action=confirm-delete]").focus();
+      }
+      if (action === "confirm-delete") void run2(async () => {
+        await c2.removeModule(module.id);
+        removed(module.id);
+      });
+    }, { signal: events.signal });
+    (module.kind === "manual" ? form.querySelector("#module-name") : form.querySelector("[data-module-action=view]"))?.focus();
+    return () => events.abort();
+  }
+
+  // src/core/planning.ts
+  var SHANGHAI_ZONE = "Asia/Shanghai";
+  function localDeadline(at) {
+    return new Intl.DateTimeFormat("sv-SE", { timeZone: SHANGHAI_ZONE, year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(at)).replace(" ", "T");
+  }
+  function parseDeadline(value) {
+    if (!value) return void 0;
+    if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) throw new Error("\u8BF7\u9009\u62E9\u5B8C\u6574\u7684\u622A\u6B62\u65E5\u671F\u548C\u65F6\u95F4\u3002");
+    const time2 = Date.parse(value + ":00+08:00");
+    if (!Number.isFinite(time2) || localDeadline(new Date(time2).toISOString()) !== value) throw new Error("\u622A\u6B62\u65E5\u671F\u6216\u65F6\u95F4\u65E0\u6548\u3002");
+    return new Date(time2).toISOString();
+  }
+  function validReminder(v) {
+    if (!v || typeof v !== "object") return false;
+    const r = v;
+    return ["days", "hours"].includes(r.unit) && typeof r.value === "number" && Number.isFinite(r.value) && r.value >= 0 && r.value <= 1e6;
+  }
+  function reminderAt(task) {
+    if (!task.dueAt) return void 0;
+    return Date.parse(task.dueAt) - (task.reminder ? task.reminder.value * (task.reminder.unit === "days" ? 864e5 : 36e5) : 0);
+  }
+  function deadlineState(task, now) {
+    if (task.done) return "done";
+    if (!task.dueAt) return "none";
+    if (now >= Date.parse(task.dueAt)) return "overdue";
+    if (task.reminder && now >= reminderAt(task)) return "warning";
+    return "scheduled";
+  }
+  function orderByDeadline(tasks) {
+    return tasks.map((task, index) => ({ task, index })).sort((a, b) => {
+      const d = (a.task.dueAt ? Date.parse(a.task.dueAt) : Infinity) - (b.task.dueAt ? Date.parse(b.task.dueAt) : Infinity);
+      return Number.isNaN(d) || d === 0 ? a.index - b.index : d;
+    }).map((v) => v.task);
+  }
+  function parseTags(text) {
+    const tags = [];
+    const body = text.replace(/(^|[\s，,；;])#([\p{L}\p{N}_/-]+)/gu, (_match, space, name) => {
+      if (!tags.some((t) => tagKey(t) === tagKey(name))) tags.push(name);
+      return space;
+    }).replace(/[ \t]+/g, " ").trim();
+    return { body, tags };
+  }
+  var tagKey = (name) => name.normalize("NFKC").toLowerCase().replace(/[\s_-]+/g, "");
+  function deadlineHint(task) {
+    const lines = [];
+    if (task.dueAt) {
+      lines.push("\u622A\u6B62\u65F6\u95F4\uFF1A" + localDeadline(task.dueAt).replace("T", " ") + "\uFF08\u4E0A\u6D77\u65F6\u95F4\uFF09");
+      if (task.reminder) lines.push("\u63D0\u9192\u65F6\u95F4\uFF1A" + localDeadline(new Date(reminderAt(task)).toISOString()).replace("T", " ") + " \xB7 \u63D0\u524D " + task.reminder.value + (task.reminder.unit === "days" ? " \u5929" : " \u5C0F\u65F6"));
+    }
+    return lines.join("\n");
+  }
+
+  // src/ui/workspace/hints.ts
+  var displayTaskName = (task) => task.origin === "manual" && task.moduleIds?.length ? parseTags(task.text).body || task.text : task.label ?? task.text;
+  function paintDeadlines(root, c2) {
+    for (const row of root.querySelectorAll("[data-task-item]")) {
+      const task = c2.tasks.find((t) => t.id === row.dataset.taskItem);
+      if (!task) continue;
+      const state = deadlineState(task, c2.now().getTime());
+      row.dataset.deadlineState = state;
+      row.classList.toggle("deadline-warning", state === "warning" || state === "overdue");
+    }
+  }
+  function bindTaskHints(root, c2) {
+    const doc = root.ownerDocument, win = doc.defaultView, events = new AbortController();
+    let hint, target;
+    const hide = () => {
+      hint?.remove();
+      hint = void 0;
+      target = void 0;
+    };
+    const show = (button) => {
+      const task = c2.tasks.find((t) => t.id === button.dataset.task);
+      hide();
+      if (!task?.dueAt) return;
+      target = button;
+      hint = doc.createElement("div");
+      hint.className = "task-deadline-tooltip";
+      hint.setAttribute("role", "tooltip");
+      hint.textContent = deadlineHint(task);
+      doc.body.append(hint);
+      const box = button.getBoundingClientRect();
+      hint.style.maxWidth = Math.max(120, Math.min(420, win.innerWidth - 24)) + "px";
+      const rect = hint.getBoundingClientRect(), left = Math.max(12, Math.min(win.innerWidth - rect.width - 12, box.left + box.width / 2 - rect.width / 2));
+      hint.style.left = left + "px";
+      hint.style.top = (box.top - rect.height - 10 >= 12 ? box.top - rect.height - 10 : Math.min(win.innerHeight - rect.height - 12, box.bottom + 10)) + "px";
+    };
+    root.addEventListener("pointerover", (e) => {
+      if (!win.matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+      const button = e.target.closest(".task-title-button");
+      if (button && button !== target) show(button);
+    }, { signal: events.signal });
+    root.addEventListener("pointerout", (e) => {
+      if (target && !target.contains(e.relatedTarget)) hide();
+    }, { signal: events.signal });
+    root.addEventListener("focusin", (e) => {
+      const button = e.target.closest(".task-title-button");
+      if (button) show(button);
+    }, { signal: events.signal });
+    root.addEventListener("focusout", hide, { signal: events.signal });
+    root.addEventListener("scroll", hide, { signal: events.signal, capture: true });
+    win.addEventListener("resize", hide, { signal: events.signal });
+    root.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") hide();
+    }, { signal: events.signal });
+    return { hide, dispose: () => {
+      events.abort();
+      hide();
+    } };
+  }
+
+  // src/ui/workspace/deadline-input.ts
+  function deadlineParts(at) {
+    if (!at) return { date: "", period: "am", hour: "9", minute: "00" };
+    const local = localDeadline(at), hour = Number(local.slice(11, 13));
+    return { date: local.slice(0, 10), period: hour >= 12 ? "pm" : "am", hour: String(hour % 12 || 12), minute: local.slice(14, 16) };
+  }
+  function deadlineValue(date, period, hour, minute) {
+    if (!date) return "";
+    if (!["am", "pm"].includes(period) || !/^([1-9]|1[0-2])$/.test(hour) || !/^([0-5][0-9])$/.test(minute)) throw new Error("\u8BF7\u9009\u62E9\u4E0A\u5348\u6216\u4E0B\u5348\uFF0C\u4EE5\u53CA\u5B8C\u6574\u7684\u65F6\u3001\u5206\u3002");
+    const value = `${date}T${String(Number(hour) % 12 + (period === "pm" ? 12 : 0)).padStart(2, "0")}:${minute}`;
+    parseDeadline(value);
+    return value;
+  }
+  function deadlineInput(at) {
+    const p = deadlineParts(at), options = (values, selected2) => values.map((v) => `<option value="${v}" ${v === selected2 ? "selected" : ""}>${v.padStart(2, "0")}</option>`).join("");
+    return `<label for="task-deadline-date">\u622A\u6B62\u65E5\u671F \xB7 \u4E0A\u6D77\u65F6\u95F4</label><input id="task-deadline-date" type="date" value="${escapeHtml(p.date)}"><div class="deadline-time-fields"><label for="task-deadline-period">\u65F6\u6BB5<select id="task-deadline-period"><option value="am" ${p.period === "am" ? "selected" : ""}>\u4E0A\u5348</option><option value="pm" ${p.period === "pm" ? "selected" : ""}>\u4E0B\u5348</option></select></label><label for="task-deadline-hour">\u65F6<select id="task-deadline-hour">${options(Array.from({ length: 12 }, (_, i) => String(i + 1)), p.hour)}</select></label><label for="task-deadline-minute">\u5206<select id="task-deadline-minute">${options(Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0")), p.minute)}</select></label></div>`;
+  }
+
+  // src/core/model.ts
+  var DEFAULT_CONFIG = {
+    timezone: "Asia/Shanghai",
+    inbox: "\u6211\u505A\u4E86\u4EC0\u4E48",
+    completed: "completed",
+    fallback: "processing",
+    cap: 5,
+    checklistLimit: 10,
+    ignore: ["kanban/", ".obsidian/", "templater/", ".trash/", "English/review/", "English/daily output/"],
+    columnMap: { "AI learning/": "AI", "English/": "english", "\u8BFE\u7A0B/\u82F1\u8BED/": "english", "thai/": "thai", "spainish/": "thai", "lessons/google lesson assignment/": "google lesson assignment", "lessons/research/": "research", "lessons/": "\u8BFE\u7A0B" },
+    protectedColumns: ["research"]
+  };
+  var emptyState = () => ({ schemaVersion: 2, notes: [], observations: [], sessions: [], receipts: [], completions: [], operations: [], successfulRuns: [], taskRegistry: [] });
+  function fingerprint(text) {
+    let h = 2166136261;
+    for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+    return (h >>> 0).toString(36);
+  }
+  var id = (prefix) => `${prefix}-${globalThis.crypto.randomUUID()}`;
+
+  // src/ui/workspace/editor.ts
+  var taskLabel = (task) => task.label ?? task.text;
+  function taskEditor(task) {
+    return `<form class="task-editor-form"><label for="task-name">\u5F85\u529E\u540D\u79F0${!task || task.origin === "manual" ? " \xB7 \u652F\u6301 #\u6807\u7B7E" : ""}</label><textarea id="task-name" name="task-name" rows="3" maxlength="2000" required>${task ? escapeHtml(taskLabel(task)) : ""}</textarea>${!task || task.origin === "manual" ? '<div class="tag-preview" aria-live="polite"></div><p class="editor-context">\u6807\u7B7E\u5339\u914D\u5DF2\u6709\u6A21\u5757\uFF0C\u5426\u5219\u4FDD\u5B58\u65F6\u521B\u5EFA\u624B\u52A8\u6A21\u5757\uFF1B\u7B2C\u4E00\u4E2A\u6807\u7B7E\u4E3A\u5B8C\u6210\u7EDF\u8BA1\u4E3B\u5206\u7C7B\u3002</p>' : '<p class="editor-context">\u5728\u6E05\u5355\u4E2D\u4FDD\u5B58\u540D\u79F0\u4E0E\u65F6\u95F4\uFF0C\u7B14\u8BB0\u6765\u6E90\u4FDD\u6301\u4E0D\u53D8\u3002</p>'}<div class="planning-fields"><div class="deadline-field">${deadlineInput(task?.dueAt)}<button type="button" class="deadline-clear" data-editor="clear-deadline">\u6E05\u7A7A\u622A\u6B62\u65F6\u95F4</button></div><label class="reminder-enable"><input id="task-reminder-enabled" type="checkbox" ${task?.reminder ? "checked" : ""}>\u63D0\u524D\u63D0\u9192</label><div class="reminder-fields"><label for="task-reminder-value">\u63D0\u524D\u91CF<input id="task-reminder-value" type="number" min="0" max="1000000" step="any" value="${task?.reminder?.value ?? 1}"></label><label for="task-reminder-unit">\u5355\u4F4D<select id="task-reminder-unit"><option value="hours" ${task?.reminder?.unit === "hours" ? "selected" : ""}>\u5C0F\u65F6</option><option value="days" ${task?.reminder?.unit === "days" ? "selected" : ""}>\u5929</option></select></label></div><p class="editor-context">\u5230\u63D0\u9192\u65F6\u95F4\u540E\u540D\u79F0\u53D8\u7EA2\uFF1B\u622A\u6B62\u5DF2\u8FC7\u5219\u4FDD\u6301\u7EA2\u8272\uFF0C\u5B8C\u6210\u540E\u53D6\u6D88\u3002</p></div><p class="editor-error" role="alert" hidden></p><div class="editor-actions">${task ? '<button type="button" class="delete-task" data-editor="delete">\u5220\u9664\u5F85\u529E</button>' : ""}<button type="button" data-editor="cancel">\u53D6\u6D88</button><button type="submit" class="save-task">${task ? "\u4FDD\u5B58\u4FEE\u6539" : "\u521B\u5EFA\u5F85\u529E"}</button></div></form>`;
+  }
+  function bindTaskEditor(root, c2, task, close, onDeleted) {
+    const events = new AbortController(), form = root.querySelector("form"), input = form.querySelector("#task-name"), error = form.querySelector(".editor-error"), deadline = form.querySelector("#task-deadline-date"), period = form.querySelector("#task-deadline-period"), hour = form.querySelector("#task-deadline-hour"), minute = form.querySelector("#task-deadline-minute"), enabled = form.querySelector("#task-reminder-enabled"), amount = form.querySelector("#task-reminder-value"), unit = form.querySelector("#task-reminder-unit");
+    const draftId = id("task-manual");
+    let busy = false;
+    const sync = () => {
+      enabled.disabled = !deadline.value;
+      if (!deadline.value) enabled.checked = false;
+      amount.disabled = unit.disabled = !deadline.value || !enabled.checked;
+      amount.required = !amount.disabled;
+    };
+    const tags = () => {
+      const holder = form.querySelector(".tag-preview");
+      if (holder) holder.innerHTML = c2.previewTags(input.value).map(({ tag, module }, i) => `<span class="tag-preview-chip" data-tag-state="${module ? "existing" : "new"}">#${escapeHtml(module?.name ?? tag)}${i === 0 ? " \xB7 \u4E3B\u6A21\u5757" : ""}${module ? "" : " \xB7 \u65B0\u5EFA"}</span>`).join("");
+    };
+    const run2 = async (work) => {
+      if (busy) return;
+      busy = true;
+      error.hidden = true;
+      form.setAttribute("aria-busy", "true");
+      for (const b of form.querySelectorAll("button")) b.disabled = true;
+      try {
+        await work();
+        close();
+      } catch (e) {
+        error.textContent = e instanceof Error ? e.message : String(e);
+        error.hidden = false;
+        input.focus();
+      } finally {
+        busy = false;
+        form.removeAttribute("aria-busy");
+        for (const b of form.querySelectorAll("button")) b.disabled = false;
+      }
+    };
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      void run2(() => {
+        const value = deadlineValue(deadline.value, period.value, hour.value, minute.value);
+        const dueAt = task?.dueAt && localDeadline(task.dueAt) === value ? task.dueAt : parseDeadline(value);
+        const options = { dueAt: dueAt ?? null, reminder: dueAt && enabled.checked ? { value: Number(amount.value), unit: unit.value } : null };
+        return task ? c2.updateTask(task.id, input.value, options) : c2.createTask(input.value, draftId, options);
+      });
+    }, { signal: events.signal });
+    input.addEventListener("input", tags, { signal: events.signal });
+    deadline.addEventListener("input", sync, { signal: events.signal });
+    deadline.addEventListener("change", sync, { signal: events.signal });
+    enabled.addEventListener("change", sync, { signal: events.signal });
+    form.querySelector("[data-editor=clear-deadline]")?.addEventListener("click", () => {
+      const p = deadlineParts();
+      deadline.value = "";
+      period.value = p.period;
+      hour.value = p.hour;
+      minute.value = p.minute;
+      sync();
+    }, { signal: events.signal });
+    form.querySelector("[data-editor=cancel]")?.addEventListener("click", close, { signal: events.signal });
+    form.querySelector("[data-editor=delete]")?.addEventListener("click", () => {
+      if (task) void run2(async () => {
+        await c2.removeTask(task.id);
+        onDeleted(task.id);
+      });
+    }, { signal: events.signal });
+    sync();
+    tags();
+    input.focus();
+    input.select();
+    return () => events.abort();
+  }
+  function taskClick(target) {
+    if (target.closest("button,a,input,summary,textarea,label,details,select")) return;
+    if (!target.closest("[data-task-surface]")) return;
+    const item = target.closest("[data-task-item]");
+    return item ? { action: "edit-task", id: item.dataset.taskItem } : { action: "new-task" };
+  }
+
+  // src/core/tasks.ts
+  function extractTasks(note, previous = []) {
+    const found = [];
+    let fence = "", frontmatter = false, comment = false;
+    for (const [line, raw] of note.text.split(/\r?\n/).entries()) {
+      if (line === 0 && raw.trim() === "---") {
+        frontmatter = true;
+        continue;
+      }
+      if (frontmatter) {
+        if (raw.trim() === "---") frontmatter = false;
+        continue;
+      }
+      const marker = raw.match(/^\s{0,3}(`{3,}|~{3,})/);
+      if (marker) {
+        const m2 = marker[1];
+        if (!fence) fence = m2;
+        else if (m2[0] === fence[0] && m2.length >= fence.length) fence = "";
+        continue;
+      }
+      if (fence) continue;
+      if (raw.includes("%%")) {
+        if ((raw.match(/%%/g)?.length ?? 0) % 2) comment = !comment;
+        continue;
+      }
+      if (raw.includes("<!--")) {
+        comment = !raw.includes("-->");
+        continue;
+      }
+      if (comment) {
+        if (raw.includes("-->")) comment = false;
+        continue;
+      }
+      const m = raw.match(/^\s*[-*+]\s+\[([ xX])\]\s+(.+)$/);
+      if (!m) continue;
+      const block = m[2].match(/\s+\^([a-zA-Z0-9-]+)\s*$/);
+      found.push({ text: m[2].replace(/\s+\^[a-zA-Z0-9-]+\s*$/, "").trim(), line, done: m[1] !== " ", blockId: block?.[1] });
+    }
+    const norm = (s) => s.trim().replace(/\s+/g, " ");
+    const previousHere = previous.filter((t) => t.noteId === note.id);
+    const seen = /* @__PURE__ */ new Map();
+    return found.map((f) => {
+      const text = norm(f.text), occurrence = seen.get(text) ?? 0;
+      seen.set(text, occurrence + 1);
+      const same = previousHere.filter((t) => norm(t.text) === text);
+      const duplicate = found.filter((t) => norm(t.text) === text).length > 1;
+      const oldAtLine = previousHere.find((t) => t.line === f.line && !found.some((n) => norm(n.text) === norm(t.text)));
+      const blockMatch = f.blockId ? previousHere.find((t) => t.blockId === f.blockId) : void 0;
+      const generated = f.blockId ? `task-${fingerprint(note.id)}-b-${f.blockId}` : `task-${fingerprint(note.id)}-${fingerprint(text)}-${occurrence}`;
+      const duplicateBlock = !!f.blockId && found.filter((t) => t.blockId === f.blockId).length > 1;
+      return { ...f, noteId: note.id, id: blockMatch?.id ?? (!duplicate && same.length === 1 ? same[0].id : generated), ambiguous: duplicateBlock || !f.blockId && (duplicate || !!oldAtLine) };
+    });
+  }
+  function classify(path, columns, config) {
+    const hit = Object.entries(config.columnMap).sort((a, b) => b[0].length - a[0].length).find(([prefix]) => path.startsWith(prefix));
+    if (hit && columns.includes(hit[1])) return hit[1];
+    const normalize = (s) => s.toLowerCase().replace(/[\s-]/g, "");
+    for (const dir of path.split("/").slice(0, -1).reverse()) {
+      const match = columns.find((c2) => normalize(c2) === normalize(dir));
+      if (match) return match;
+    }
+    if (columns.includes(config.fallback)) return config.fallback;
+    throw new Error("\u7F3A\u5C11\u76EE\u6807\u5217\u548C processing \u515C\u5E95\u5217\uFF0C\u8BF7\u786E\u8BA4\u770B\u677F\u7ED3\u6784\u3002");
+  }
+
+  // src/core/modules.ts
+  var INBOX_MODULE = "manual-inbox";
+  function moduleForPath(path, config = DEFAULT_CONFIG) {
+    if (path === "\u624B\u52A8\u5F85\u529E") return "\u624B\u52A8\u5F85\u529E";
+    return classify(path, [.../* @__PURE__ */ new Set([...Object.values(config.columnMap), config.fallback])], config);
+  }
+  var sourceModuleId = (name) => "source:" + tagKey(name);
+  function moduleCatalog(state, manuals = [], hidden = [], config = DEFAULT_CONFIG) {
+    const labels = [.../* @__PURE__ */ new Set([...Object.values(config.columnMap), config.fallback, ...state.notes.filter((n) => n.id !== "note-manual-tasks").map((n) => moduleForPath(n.path, config))])];
+    return [...labels.map((name) => ({ id: sourceModuleId(name), name, kind: "source", hidden: hidden.includes(sourceModuleId(name)), aliases: [] })), ...manuals.filter((m) => !m.deletedAt).map((m) => ({ ...m, kind: "manual", hidden: false }))];
+  }
+  function moduleForTask(task, noteId, state, catalog, manuals = [], config = DEFAULT_CONFIG) {
+    if (task?.origin === "manual") {
+      const key = task.moduleIds?.[0] ?? INBOX_MODULE, active = catalog.find((m) => m.id === key);
+      if (active) return active;
+      const removed = manuals.find((m) => m.id === key);
+      if (removed) return { ...removed, kind: "manual", hidden: true };
+      return { id: INBOX_MODULE, name: "\u624B\u52A8\u5F85\u529E", kind: "manual", hidden: false, aliases: [] };
+    }
+    const note = state.notes.find((n) => n.id === noteId), name = note ? moduleForPath(note.path, config) : "\u6765\u6E90\u4E0D\u53EF\u7528";
+    return catalog.find((m) => m.id === sourceModuleId(name)) ?? { id: sourceModuleId(name), name, kind: "source", hidden: false, aliases: [] };
+  }
+
+  // src/core/scheduler.ts
+  function localDate(at) {
+    return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Shanghai", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(at));
+  }
+
+  // src/core/task-revisions.ts
+  function extractTaskRevision(note, previous, previousText) {
+    if (previousText === note.text) return previous.map((t) => ({ ...t }));
+    const next = extractTasks(note, previous);
+    if (previousText === void 0) return next;
+    const before = previousText.split(/\r?\n/), after = note.text.split(/\r?\n/);
+    let start = 0;
+    while (start < before.length && start < after.length && before[start] === after[start]) start++;
+    let oldEnd = before.length, newEnd = after.length;
+    while (oldEnd > start && newEnd > start && before[oldEnd - 1] === after[newEnd - 1]) {
+      oldEnd--;
+      newEnd--;
+    }
+    const oldChanged = previous.filter((t) => t.line >= start && t.line < oldEnd);
+    for (const old of oldChanged) {
+      const line = old.line;
+      if (!old.blockId && line < newEnd && /^\s*[-*+]\s+\[[ xX]\]\s*$/.test(after[line] ?? "")) {
+        next.push({ ...old, text: "", line });
+      }
+    }
+    const newChanged = next.filter((t) => t.line >= start && t.line < newEnd);
+    const existingIds = new Set(previous.map((t) => t.id)), used = new Set(next.filter((t) => existingIds.has(t.id)).map((t) => t.id));
+    const norm = (s) => s.trim().replace(/\s+/g, " ");
+    for (const candidate of newChanged) {
+      if (existingIds.has(candidate.id) || candidate.blockId) continue;
+      const old = oldEnd - start === newEnd - start ? oldChanged.find((t) => t.line === candidate.line) : oldChanged.length === 1 && newChanged.length === 1 ? oldChanged[0] : void 0;
+      if (!old || old.blockId || used.has(old.id)) continue;
+      if (previous.filter((t) => norm(t.text) === norm(old.text)).length !== 1 || next.filter((t) => norm(t.text) === norm(candidate.text)).length !== 1) continue;
+      candidate.id = old.id;
+      candidate.ambiguous = old.ambiguous;
+      used.add(old.id);
+    }
+    return next.sort((a, b) => a.line - b.line);
+  }
+
+  // src/core/usage.ts
+  var UsageRecorder = class {
+    constructor(state, clock2, idleMs = 9e4) {
+      __publicField(this, "state", state);
+      __publicField(this, "clock", clock2);
+      __publicField(this, "idleMs", idleMs);
+      __publicField(this, "active", null);
+    }
+    interact(noteId, source = "user") {
+      const now = this.clock.now().getTime();
+      if (source === "external") return;
+      if (this.active && now - this.active.last > this.idleMs) this.close("idle");
+      if (this.active && this.active.noteId !== noteId) this.close("switch");
+      if (!this.active) this.active = { noteId, start: now, last: now };
+      else this.active.last = Math.max(this.active.last, now);
+      observeNote(this.state, noteId, localDate(new Date(now)));
+    }
+    checkIdle() {
+      if (this.active && this.clock.now().getTime() - this.active.last > this.idleMs) this.close("idle");
+    }
+    close(reason = "pause") {
+      if (!this.active) return;
+      const a = this.active, now = this.clock.now().getTime();
+      const end = reason === "idle" || reason === "interruption" || now - a.last > this.idleMs ? a.last : now;
+      if (end > a.start) this.state.sessions.push({ id: id("session"), noteId: a.noteId, start: new Date(a.start).toISOString(), end: new Date(end).toISOString(), estimated: true, reason });
+      this.active = null;
+    }
+  };
+  function observeNote(state, noteId, date) {
+    if (!state.observations.some((o) => o.noteId === noteId && o.date === date)) state.observations.push({ noteId, date });
+  }
+
+  // src/application/workspace.ts
+  var emptyWorkspace = () => ({ schemaVersion: 5, manualModules: [], hiddenModules: [], state: emptyState(), tasks: [], decisions: {}, deletedNotes: [] });
+  var validDate = (s) => typeof s === "string" && Number.isFinite(Date.parse(s));
+  var object = (v) => !!v && typeof v === "object" && !Array.isArray(v);
+  function validateWorkspace(raw) {
+    if (!object(raw) || (typeof raw.schemaVersion !== "number" || ![2, 3, 4, 5].includes(raw.schemaVersion)) || !object(raw.state) || raw.state.schemaVersion !== (raw.schemaVersion === 2 ? 1 : 2) || !Array.isArray(raw.tasks) || !object(raw.decisions) || !Array.isArray(raw.deletedNotes)) throw new Error("\u4EFB\u52A1\u6570\u636E\u683C\u5F0F\u4E0D\u53D7\u652F\u6301\uFF1B\u539F\u6570\u636E\u672A\u8986\u76D6\u3002");
+    const s = raw.state;
+    if (raw.schemaVersion !== 2 && "activities" in s) throw new Error("\u5F53\u524D\u4EFB\u52A1\u683C\u5F0F\u4E0D\u63A5\u53D7\u5DF2\u79FB\u9664\u7684\u8282\u70B9\u6570\u636E\u3002");
+    for (const k of ["notes", raw.schemaVersion === 2 ? "activities" : "observations", "sessions", "receipts", "completions", "operations", "successfulRuns", "taskRegistry"]) if (!Array.isArray(s[k])) throw new Error("\u4EFB\u52A1\u6570\u636E\u4E0D\u5B8C\u6574\uFF1B\u539F\u6570\u636E\u672A\u8986\u76D6\u3002");
+    const notes = s.notes, ids = /* @__PURE__ */ new Set(), paths = /* @__PURE__ */ new Set();
+    for (const n of notes) {
+      if (!object(n) || typeof n.id !== "string" || typeof n.path !== "string" || typeof n.text !== "string" || !Number.isInteger(n.version) || ids.has(n.id)) throw new Error("\u7B14\u8BB0\u8EAB\u4EFD\u6570\u636E\u635F\u574F\u3002");
+      ids.add(n.id);
+      paths.add(n.path);
+    }
+    const taskIds = /* @__PURE__ */ new Set();
+    for (const t of raw.tasks) {
+      if (!object(t) || typeof t.id !== "string" || typeof t.noteId !== "string" || !ids.has(t.noteId) || typeof t.text !== "string" || typeof t.done !== "boolean" || typeof t.ambiguous !== "boolean" || !Number.isInteger(t.line) || Number(t.line) < 0 || !validDate(t.collectedAt) || taskIds.has(t.id) || t.completedAt !== void 0 && !validDate(t.completedAt) || t.deletedAt !== void 0 && !validDate(t.deletedAt) || t.origin !== void 0 && t.origin !== "manual" || t.dueAt !== void 0 && (!validDate(t.dueAt) || !/[Tt].*(?:Z|[+-]\d{2}:\d{2})$/.test(String(t.dueAt))) || t.reminder !== void 0 && (!t.dueAt || !validReminder(t.reminder)) || t.moduleIds !== void 0 && (!Array.isArray(t.moduleIds) || t.moduleIds.some((k) => typeof k !== "string") || new Set(t.moduleIds).size !== t.moduleIds.length) || t.label !== void 0 && (typeof t.label !== "string" || !t.label.trim() || t.label.length > 2e3)) throw new Error("\u4EFB\u52A1\u6761\u76EE\u635F\u574F\u3002");
+      taskIds.add(t.id);
+    }
+    if (raw.schemaVersion === 2) {
+      for (const a of s.activities) if (!object(a) || typeof a.id !== "string" || typeof a.noteId !== "string" || !ids.has(a.noteId) || !validDate(a.at) || !["user", "external"].includes(String(a.source)) || !["visit", "edit"].includes(String(a.kind))) throw new Error("\u65E7\u6D3B\u52A8\u8BB0\u5F55\u635F\u574F\u3002");
+    } else {
+      const seen = /* @__PURE__ */ new Set();
+      for (const o of s.observations) {
+        if (!object(o) || typeof o.noteId !== "string" || !ids.has(o.noteId) || typeof o.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(o.date) || !validDate(o.date) || seen.has(o.noteId + "@" + o.date)) throw new Error("\u7B14\u8BB0\u7EDF\u8BA1\u8BB0\u5F55\u635F\u574F\u3002");
+        seen.add(o.noteId + "@" + o.date);
+      }
+    }
+    for (const i of s.sessions) if (!object(i) || typeof i.noteId !== "string" || !ids.has(i.noteId) || !validDate(i.start) || !validDate(i.end)) throw new Error("\u6D3B\u52A8\u533A\u95F4\u635F\u574F\u3002");
+    for (const r of s.receipts) if (!object(r) || !validDate(r.at) || !Array.isArray(r.taskIds) || r.taskIds.some((t) => typeof t !== "string" || !taskIds.has(t))) throw new Error("\u6536\u5F55\u8BB0\u5F55\u635F\u574F\u3002");
+    for (const c2 of s.completions) if (!object(c2) || typeof c2.taskId !== "string" || !taskIds.has(c2.taskId) || !validDate(c2.at)) throw new Error("\u5B8C\u6210\u8BB0\u5F55\u635F\u574F\u3002");
+    for (const [key, value] of Object.entries(raw.decisions)) if (!ids.has(key) || !["allow", "skip"].includes(String(value))) throw new Error("\u5BFC\u5165\u9009\u62E9\u635F\u574F\u3002");
+    if (raw.deletedNotes.some((n) => typeof n !== "string" || !ids.has(n))) throw new Error("\u6765\u6E90\u72B6\u6001\u635F\u574F\u3002");
+    const result = structuredClone(raw);
+    if (raw.schemaVersion === 2) {
+      const state = result.state, seen = /* @__PURE__ */ new Set();
+      state.observations = s.activities.filter((a) => a.source === "user").flatMap((a) => {
+        const date = localDate(a.at), key = a.noteId + "@" + date;
+        if (seen.has(key)) return [];
+        seen.add(key);
+        return [{ noteId: a.noteId, date }];
+      });
+      delete state.activities;
+      state.schemaVersion = 2;
+      result.schemaVersion = 3;
+    }
+    if (raw.schemaVersion === 5) {
+      if (!Array.isArray(raw.manualModules) || !Array.isArray(raw.hiddenModules)) throw new Error("\u6A21\u5757\u6570\u636E\u4E0D\u5B8C\u6574\u3002");
+      const moduleIds = /* @__PURE__ */ new Set(), names = /* @__PURE__ */ new Map();
+      for (const m of raw.manualModules) {
+        if (!object(m) || typeof m.id !== "string" || typeof m.name !== "string" || !m.name.trim() || m.name.length > 80 || !Array.isArray(m.aliases) || m.aliases.some((a) => typeof a !== "string" || !tagKey(a) || a.length > 80) || !validDate(m.createdAt) || m.deletedAt !== void 0 && !validDate(m.deletedAt) || (!m.id.trim() || moduleIds.has(m.id))) throw new Error("\u6A21\u5757\u6570\u636E\u635F\u574F\u3002");
+        if (m.id.startsWith("source:") || !tagKey(m.name)) throw new Error("\u6A21\u5757\u8EAB\u4EFD\u6216\u540D\u79F0\u635F\u574F\u3002");
+        moduleIds.add(m.id);
+        if (!m.deletedAt) {
+          for (const name of [m.name, ...m.aliases]) {
+            const key = tagKey(name);
+            if (names.has(key) && names.get(key) !== m.id) throw new Error("\u6A21\u5757\u540D\u79F0\u51B2\u7A81\u3002");
+            names.set(key, m.id);
+          }
+        }
+      }
+      if (raw.hiddenModules.some((k) => typeof k !== "string" || !k.startsWith("source:")) || new Set(raw.hiddenModules).size !== raw.hiddenModules.length) throw new Error("\u6A21\u5757\u663E\u793A\u72B6\u6001\u635F\u574F\u3002");
+      const catalog = moduleCatalog(result.state, raw.manualModules, raw.hiddenModules), known = /* @__PURE__ */ new Set([...catalog.map((m) => m.id), ...moduleIds, INBOX_MODULE]);
+      for (const source of catalog.filter((m) => m.kind === "source")) if (names.has(tagKey(source.name))) throw new Error("\u624B\u52A8\u6A21\u5757\u4E0E\u7B14\u8BB0\u6A21\u5757\u540D\u79F0\u51B2\u7A81\u3002");
+      if (raw.tasks.some((t) => t.moduleIds?.some((k) => !known.has(k)))) throw new Error("\u4EFB\u52A1\u6A21\u5757\u5F15\u7528\u635F\u574F\u3002");
+    } else {
+      result.manualModules = [];
+      result.hiddenModules = [];
+      const manual = raw.tasks.filter((t) => t.origin === "manual");
+      if (manual.length) result.manualModules.push({ id: INBOX_MODULE, name: "\u624B\u52A8\u5F85\u529E", aliases: [], createdAt: String(manual[0].collectedAt) });
+    }
+    result.schemaVersion = 5;
+    return result;
+  }
+  var WorkspaceController = class {
+    constructor(source, clock2, store, confirm, raw = null) {
+      __publicField(this, "source", source);
+      __publicField(this, "clock", clock2);
+      __publicField(this, "store", store);
+      __publicField(this, "confirm", confirm);
+      __publicField(this, "data");
+      __publicField(this, "observed", /* @__PURE__ */ new Map());
+      __publicField(this, "storageError", "");
+      __publicField(this, "identities", /* @__PURE__ */ new WeakMap());
+      __publicField(this, "generations", /* @__PURE__ */ new WeakMap());
+      __publicField(this, "candidates", /* @__PURE__ */ new Map());
+      __publicField(this, "listeners", /* @__PURE__ */ new Set());
+      __publicField(this, "imports", /* @__PURE__ */ new Map());
+      __publicField(this, "saveTail", Promise.resolve());
+      __publicField(this, "disposed", false);
+      __publicField(this, "recorder");
+      this.data = raw === null ? emptyWorkspace() : validateWorkspace(raw);
+      this.syncRegistry();
+      this.recorder = new UsageRecorder(this.state, clock2);
+    }
+    get state() {
+      return this.data.state;
+    }
+    get tasks() {
+      return this.data.tasks.filter((t) => !t.deletedAt);
+    }
+    now() {
+      return this.clock.now();
+    }
+    get analyticsContext() {
+      return { tasks: this.data.tasks, manualModules: this.data.manualModules, hiddenModules: this.data.hiddenModules };
+    }
+    get modules() {
+      return moduleCatalog(this.state, this.data.manualModules, this.data.hiddenModules);
+    }
+    taskModule(task) {
+      return moduleForTask(task, task.noteId, this.state, this.modules, this.data.manualModules);
+    }
+    taskInModule(task, moduleId) {
+      return task.origin === "manual" ? task.moduleIds?.length ? task.moduleIds.includes(moduleId) : moduleId === INBOX_MODULE : this.taskModule(task).id === moduleId;
+    }
+    get pending() {
+      return this.tasks.filter((t) => !t.done);
+    }
+    title(noteId) {
+      return this.state.notes.find((n) => n.id === noteId)?.path.split("/").at(-1)?.replace(/\.md$/, "") ?? "\u6765\u6E90\u4E0D\u53EF\u7528";
+    }
+    subscribe(fn) {
+      this.listeners.add(fn);
+      return () => this.listeners.delete(fn);
+    }
+    emit() {
+      if (!this.disposed) for (const fn of this.listeners) fn();
+    }
+    syncRegistry() {
+      this.state.taskRegistry = this.tasks;
+    }
+    allowed(file2) {
+      return file2.extension === "md" && file2.stat.size <= 1e6 && ![".obsidian/", ".trash/", "kanban/"].some((p) => file2.path.startsWith(p));
+    }
+    known(file2) {
+      const key = this.identities.get(file2);
+      return key ? this.observed.get(key) : void 0;
+    }
+    register(file2) {
+      let key = this.identities.get(file2);
+      if (!key) {
+        key = this.state.notes.find((n2) => n2.path === file2.path && !this.data.deletedNotes.includes(n2.id))?.id ?? id("note");
+        this.identities.set(file2, key);
+      }
+      let n = this.observed.get(key);
+      if (!n) {
+        const stored = this.state.notes.find((n2) => n2.id === key);
+        n = { id: key, path: file2.path, text: "", version: stored?.version ?? 0, indexed: false, dirty: false };
+        this.observed.set(key, n);
+        if (!stored) this.state.notes.push({ id: key, path: file2.path, text: "", version: 0 });
+      }
+      return n;
+    }
+    snapshot() {
+      const result = structuredClone(this.data);
+      for (const note of result.state.notes) note.text = "";
+      result.state.taskRegistry = [];
+      return result;
+    }
+    persist() {
+      const snapshot = this.snapshot();
+      const next = this.saveTail.catch(() => {
+      }).then(() => this.store.save(snapshot)).then(() => {
+        this.storageError = "";
+        this.emit();
+      }, (error) => {
+        this.storageError = "\u4FDD\u5B58\u5931\u8D25\uFF0C\u5F85\u529E\u5C1A\u672A\u5199\u5165\u78C1\u76D8\uFF1A" + (error instanceof Error ? error.message : String(error));
+        this.emit();
+        throw error;
+      });
+      this.saveTail = next;
+      void next.catch(() => {
+      });
+      return next;
+    }
+    save() {
+      void this.persist().catch(() => {
+      });
+    }
+    async ready() {
+      await this.saveTail;
+    }
+    receive(n, text, indexed, dirty = false) {
+      const previous = this.candidates.get(n.id);
+      const oldText = previous ? n.text : void 0;
+      n.text = text;
+      n.indexed = indexed;
+      n.dirty = dirty;
+      n.version++;
+      delete n.error;
+      const stored = this.state.notes.find((s) => s.id === n.id);
+      stored.path = n.path;
+      stored.version = n.version;
+      stored.text = text;
+      this.candidates.set(n.id, extractTaskRevision(stored, previous ?? this.data.tasks.filter((t) => t.noteId === n.id && t.origin !== "manual"), oldText));
+      this.emit();
+      if (indexed && !dirty) void this.collect(n.id).catch((error) => {
+        n.error = error instanceof Error ? error.message : String(error);
+        this.emit();
+      });
+    }
+    async open(file2) {
+      if (this.disposed || !this.allowed(file2)) return;
+      const n = this.register(file2), generation = (this.generations.get(file2) ?? 0) + 1;
+      this.generations.set(file2, generation);
+      this.recorder.interact(n.id);
+      this.save();
+      this.emit();
+      try {
+        const packet = await this.source.read(file2);
+        if (this.disposed || this.generations.get(file2) !== generation) return;
+        if (packet.text.length > 1e6) throw new Error("\u6587\u4EF6\u8D85\u8FC7 1MB \u5BFC\u5165\u4E0A\u9650\u3002");
+        if (!n.dirty) this.receive(n, packet.text, packet.indexed);
+      } catch (error) {
+        if (!this.disposed && this.generations.get(file2) === generation) {
+          n.error = error instanceof Error ? error.message : String(error);
+          this.emit();
+        }
+      }
+      await this.imports.get(n.id);
+    }
+    edit(file2, text) {
+      if (this.disposed || !this.allowed(file2) || text.length > 1e6) return;
+      const n = this.register(file2), confirmed = n.indexed && n.text === text;
+      this.generations.set(file2, (this.generations.get(file2) ?? 0) + 1);
+      this.receive(n, text, confirmed, !confirmed);
+      this.recorder.interact(n.id);
+      this.save();
+      this.emit();
+    }
+    indexed(file2, text) {
+      if (this.disposed || !this.allowed(file2) || text.length > 1e6) return;
+      const n = this.known(file2);
+      if (!n) return;
+      this.generations.set(file2, (this.generations.get(file2) ?? 0) + 1);
+      if (n.dirty && n.text !== text) {
+        n.indexed = false;
+        this.emit();
+        return;
+      }
+      this.receive(n, text, true);
+    }
+    collect(noteId, force = false) {
+      const running = this.imports.get(noteId);
+      if (running) return running;
+      const work = Promise.resolve().then(async () => {
+        const n = this.observed.get(noteId);
+        if (this.disposed || !n || !n.indexed || n.dirty) return;
+        let candidates = this.candidates.get(noteId) ?? [], pending = candidates.filter((t) => !t.done && t.text.trim() && !this.data.tasks.some((old) => old.id === t.id && old.deletedAt));
+        if (this.data.decisions[noteId] === "skip" && !force) return;
+        const hasNew = pending.some((t) => !this.tasks.some((existing) => existing.id === t.id));
+        if (pending.length > 5 && hasNew && this.data.decisions[noteId] !== "allow") {
+          const allow = await this.confirm({ noteId, path: n.path, count: pending.length });
+          if (this.disposed || this.data.deletedNotes.includes(noteId)) return;
+          this.data.decisions[noteId] = allow ? "allow" : "skip";
+          this.save();
+          this.emit();
+          if (!allow) return;
+        }
+        if (this.disposed) return;
+        candidates = this.candidates.get(noteId) ?? [];
+        const at = this.clock.now().toISOString(), added = [];
+        for (const candidate of candidates) {
+          const existing = this.data.tasks.find((t) => t.id === candidate.id);
+          if (existing?.deletedAt) continue;
+          if (!candidate.text.trim()) {
+            if (existing) existing.line = candidate.line;
+            continue;
+          }
+          if (existing) {
+            existing.text = candidate.text;
+            existing.line = candidate.line;
+            existing.ambiguous = candidate.ambiguous;
+            existing.sourceUnavailable = false;
+            existing.missingFromSource = false;
+            continue;
+          }
+          if (candidate.done || candidate.ambiguous) continue;
+          this.data.tasks.push({ ...candidate, done: false, collectedAt: at });
+          added.push(candidate.id);
+        }
+        for (const task of this.tasks.filter((t) => t.noteId === noteId)) if (!candidates.some((c2) => c2.id === task.id)) task.missingFromSource = true;
+        if (added.length) this.state.receipts.push({ id: id("receipt"), noteId, taskIds: added, at });
+        this.syncRegistry();
+        await this.persist();
+        this.emit();
+      }).finally(() => {
+        this.imports.delete(noteId);
+      });
+      this.imports.set(noteId, work);
+      void work.catch(() => {
+      });
+      return work;
+    }
+    async createTask(text, taskId = id("task-manual"), options = {}) {
+      if (this.disposed) throw new Error("\u63D2\u4EF6\u5DF2\u5173\u95ED\u3002");
+      const value = this.taskText(text), details = this.taskDetails(options), noteId = "note-manual-tasks";
+      if (!parseTags(value).body) throw new Error("\u6807\u7B7E\u4EE5\u5916\u8FD8\u9700\u8981\u586B\u5199\u5F85\u529E\u540D\u79F0\u3002");
+      const existing = this.data.tasks.find((t) => t.id === taskId);
+      if (existing) {
+        if (existing.origin !== "manual" || existing.deletedAt) throw new Error("\u5F85\u529E\u8EAB\u4EFD\u4E0D\u53EF\u590D\u7528\u3002");
+        await this.updateTask(taskId, value, options);
+        return taskId;
+      }
+      const moduleIds = this.assignTags(value);
+      if (!this.state.notes.some((n) => n.id === noteId)) this.state.notes.push({ id: noteId, path: "\u624B\u52A8\u5F85\u529E", text: "", version: 0 });
+      const at = this.clock.now().toISOString();
+      this.data.tasks.push({ id: taskId, noteId, text: value, line: 0, done: false, ambiguous: false, collectedAt: at, origin: "manual", ...details, moduleIds });
+      this.state.receipts.push({ id: id("receipt"), noteId, taskIds: [taskId], at });
+      this.syncRegistry();
+      this.emit();
+      await this.persist();
+      return taskId;
+    }
+    taskText(text) {
+      const value = text.trim();
+      if (!value) throw new Error("\u8BF7\u8F93\u5165\u5F85\u529E\u540D\u79F0\u3002");
+      if (value.length > 2e3) throw new Error("\u5F85\u529E\u540D\u79F0\u6700\u591A 2000 \u4E2A\u5B57\u7B26\u3002");
+      return value;
+    }
+    taskDetails(options, task) {
+      const dueAt = options.dueAt === void 0 ? task?.dueAt : options.dueAt ?? void 0;
+      const reminder = options.reminder === void 0 ? options.dueAt === null ? void 0 : task?.reminder : options.reminder ?? void 0;
+      if (dueAt !== void 0 && (!validDate(dueAt) || !/[Tt].*(?:Z|[+-]\d{2}:\d{2})$/.test(dueAt))) throw new Error("\u622A\u6B62\u65F6\u95F4\u9700\u8981\u5B8C\u6574\u65E5\u671F\u3001\u65F6\u95F4\u548C\u65F6\u533A\u3002");
+      if (reminder && (!dueAt || !validReminder(reminder))) throw new Error("\u5148\u8BBE\u7F6E\u622A\u6B62\u65F6\u95F4\uFF0C\u518D\u586B\u5199\u975E\u8D1F\u7684\u5929\u6216\u5C0F\u65F6\u63D0\u9192\u3002");
+      return { dueAt, reminder: reminder ? { ...reminder } : void 0 };
+    }
+    previewTags(text) {
+      return parseTags(text).tags.map((tag) => ({ tag, module: this.modules.find((m) => [m.name, ...m.aliases].some((name) => tagKey(name) === tagKey(tag))) }));
+    }
+    assignTags(text) {
+      const tags = parseTags(text).tags;
+      if (tags.some((tag) => !tagKey(tag) || tag.length > 80)) throw new Error("\u6807\u7B7E\u9700\u8981\u6709\u6548\u540D\u79F0\uFF0C\u4E14\u6700\u591A 80 \u4E2A\u5B57\u7B26\u3002");
+      if (!tags.length) {
+        let inbox = this.data.manualModules.find((m) => m.id === INBOX_MODULE);
+        if (!inbox) {
+          inbox = { id: INBOX_MODULE, name: "\u624B\u52A8\u5F85\u529E", aliases: [], createdAt: this.clock.now().toISOString() };
+          this.data.manualModules.push(inbox);
+        } else delete inbox.deletedAt;
+        return [INBOX_MODULE];
+      }
+      return tags.map((tag) => {
+        let module = this.modules.find((m) => [m.name, ...m.aliases].some((name) => tagKey(name) === tagKey(tag)));
+        if (!module) {
+          const m = { id: tagKey(tag) === tagKey("\u624B\u52A8\u5F85\u529E") ? INBOX_MODULE : id("module"), name: tag, aliases: [], createdAt: this.clock.now().toISOString() };
+          const old = this.data.manualModules.findIndex((v) => v.id === m.id);
+          if (old >= 0) this.data.manualModules[old] = m;
+          else this.data.manualModules.push(m);
+          module = { ...m, kind: "manual", hidden: false };
+        }
+        this.data.hiddenModules = this.data.hiddenModules.filter((k) => k !== module.id);
+        return module.id;
+      });
+    }
+    async renameTask(taskId, text) {
+      return this.updateTask(taskId, text);
+    }
+    async updateTask(taskId, text, options = {}) {
+      if (this.disposed) return;
+      const value = this.taskText(text), task = this.tasks.find((t) => t.id === taskId);
+      if (!task) throw new Error("\u5F85\u529E\u5DF2\u5220\u9664\u3002");
+      const details = this.taskDetails(options, task);
+      if (task.origin === "manual") {
+        if (!parseTags(value).body) throw new Error("\u6807\u7B7E\u4EE5\u5916\u8FD8\u9700\u8981\u586B\u5199\u5F85\u529E\u540D\u79F0\u3002");
+        const moduleIds = this.assignTags(value);
+        task.text = value;
+        task.moduleIds = moduleIds;
+      } else task.label = value;
+      Object.assign(task, details);
+      this.emit();
+      await this.persist();
+    }
+    moduleTaskCount(moduleId) {
+      return this.tasks.filter((t) => t.origin === "manual" && this.taskInModule(t, moduleId)).length;
+    }
+    async renameModule(moduleId, name) {
+      if (this.disposed) return;
+      const module = this.data.manualModules.find((m) => m.id === moduleId && !m.deletedAt);
+      if (!module) throw new Error("\u7B14\u8BB0\u6765\u6E90\u6A21\u5757\u7684\u540D\u79F0\u4E0D\u80FD\u4FEE\u6539\u3002");
+      const value = name.trim();
+      if (!value || !tagKey(value) || value.length > 80) throw new Error("\u6A21\u5757\u540D\u79F0\u9700\u8981 1\u201380 \u4E2A\u5B57\u7B26\u3002");
+      const collision = this.modules.find((m) => m.id !== moduleId && [m.name, ...m.aliases].some((n) => tagKey(n) === tagKey(value)));
+      if (collision) throw new Error("\u5DF2\u6709\u540C\u540D\u6A21\u5757\uFF0C\u8BF7\u4F7F\u7528\u5176\u5B83\u540D\u79F0\u3002");
+      if (tagKey(module.name) !== tagKey(value) && !module.aliases.some((a) => tagKey(a) === tagKey(module.name))) module.aliases.push(module.name);
+      module.name = value;
+      this.emit();
+      await this.persist();
+    }
+    async removeModule(moduleId) {
+      if (this.disposed) return;
+      const deleted = this.data.manualModules.find((m) => m.id === moduleId);
+      const module = this.modules.find((m) => m.id === moduleId) ?? (deleted ? { ...deleted, kind: "manual", hidden: true } : void 0);
+      if (!module) throw new Error("\u6A21\u5757\u5DF2\u4E0D\u5B58\u5728\u3002");
+      const at = this.clock.now().toISOString();
+      for (const t of this.tasks) if (t.origin === "manual" && this.taskInModule(t, moduleId)) t.deletedAt = at;
+      if (module.kind === "manual") this.data.manualModules.find((m) => m.id === moduleId).deletedAt ??= at;
+      else if (!this.data.hiddenModules.includes(moduleId)) this.data.hiddenModules.push(moduleId);
+      this.syncRegistry();
+      this.emit();
+      await this.persist();
+    }
+    async showModule(moduleId) {
+      if (this.disposed) return;
+      this.data.hiddenModules = this.data.hiddenModules.filter((k) => k !== moduleId);
+      this.emit();
+      await this.persist();
+    }
+    async removeTask(taskId) {
+      if (this.disposed) return;
+      const task = this.data.tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      task.deletedAt ??= this.clock.now().toISOString();
+      this.syncRegistry();
+      this.emit();
+      await this.persist();
+    }
+    async restoreTask(taskId) {
+      if (this.disposed) return;
+      const task = this.data.tasks.find((t) => t.id === taskId);
+      if (!task) return;
+      delete task.deletedAt;
+      this.syncRegistry();
+      this.emit();
+      await this.persist();
+    }
+    async complete(taskId, done) {
+      if (this.disposed) return;
+      const task = this.tasks.find((t) => t.id === taskId);
+      if (!task || task.done === done) return;
+      task.done = done;
+      if (done) {
+        task.completedAt = this.clock.now().toISOString();
+        this.state.completions.push({ taskId, noteId: task.noteId, at: task.completedAt });
+      } else delete task.completedAt;
+      this.emit();
+      await this.persist();
+    }
+    renamed(file2, oldPath) {
+      if (this.disposed) return;
+      const stored = this.state.notes.find((n2) => n2.id === this.identities.get(file2) || n2.path === oldPath);
+      if (!stored) return;
+      this.identities.set(file2, stored.id);
+      stored.path = file2.path;
+      const n = this.observed.get(stored.id);
+      if (n) n.path = file2.path;
+      this.save();
+      this.emit();
+    }
+    deleted(file2) {
+      if (this.disposed) return;
+      const key = this.identities.get(file2) ?? this.state.notes.find((n) => n.path === file2.path)?.id;
+      if (!key) return;
+      this.generations.set(file2, (this.generations.get(file2) ?? 0) + 1);
+      this.recorder.close("interruption");
+      this.observed.delete(key);
+      this.candidates.delete(key);
+      this.identities.delete(file2);
+      if (!this.data.deletedNotes.includes(key)) this.data.deletedNotes.push(key);
+      for (const task of this.tasks.filter((t) => t.noteId === key)) task.sourceUnavailable = true;
+      this.save();
+      this.emit();
+    }
+    pause() {
+      if (this.disposed) return;
+      this.recorder.close("blur");
+      this.save();
+      this.emit();
+    }
+    checkIdle() {
+      if (this.disposed) return;
+      const before = this.state.sessions.length;
+      this.recorder.checkIdle();
+      if (this.state.sessions.length !== before) {
+        this.save();
+        this.emit();
+      }
+    }
+    async dispose() {
+      if (this.disposed) return;
+      this.recorder.close("interruption");
+      this.disposed = true;
+      this.listeners.clear();
+      await this.persist();
+      this.observed.clear();
+      this.candidates.clear();
+    }
+  };
+
+  // src/adapters/browser/demo.ts
+  var DEMO_NOW = "2026-11-20T17:35:00+08:00";
+  function demoState() {
+    const state = emptyState();
+    state.notes = [
+      { id: "note-reading", path: "AI learning/\u9605\u8BFB\u6458\u8BB0.md", version: 1, text: "# \u9605\u8BFB\u6458\u8BB0\n\n\u6574\u7406\u51E0\u79CD\u4FE1\u606F\u68C0\u7D22\u65B9\u6CD5\uFF0C\u7559\u4E0B\u53EF\u4EE5\u7EE7\u7EED\u9A8C\u8BC1\u7684\u95EE\u9898\u3002\n\n- [ ] \u6BD4\u8F83\u4E24\u79CD\u68C0\u7D22\u7ED3\u679C\n- [ ] \u8865\u5145\u6765\u6E90\u8BF4\u660E" },
+      { id: "note-plan", path: "lessons/\u65B9\u6848\u8349\u7A3F.md", version: 1, text: "# \u65B9\u6848\u8349\u7A3F\n\n\u4ECE\u4E00\u4E2A\u5C0F\u95EE\u9898\u5F00\u59CB\uFF0C\u628A\u8981\u505A\u7684\u4E8B\u5199\u6E05\u695A\u3002\n\n- [ ] \u5217\u51FA\u4E09\u79CD\u5B9E\u73B0\u65B9\u5F0F\n- [ ] \u8865\u5145\u8FB9\u754C\u60C5\u51B5" },
+      { id: "note-practice", path: "English/\u8BED\u8A00\u7EC3\u4E60.md", version: 1, text: "# \u8BED\u8A00\u7EC3\u4E60\n\n\u8BB0\u5F55\u4ECA\u5929\u8BFB\u5230\u7684\u8868\u8FBE\u548C\u53EF\u4EE5\u590D\u7528\u7684\u53E5\u5F0F\u3002\n\n- [ ] \u6574\u7406\u65B0\u7684\u8FDE\u63A5\u8868\u8FBE\n- [ ] \u5B8C\u6210\u4E00\u6B21\u53E3\u5934\u590D\u8FF0" },
+      { id: "note-api", path: "AI learning/\u63A5\u53E3\u7EC3\u4E60.md", version: 1, text: "# \u63A5\u53E3\u7EC3\u4E60\n\n\u4E3A\u63A5\u53E3\u51C6\u5907\u51E0\u4E2A\u53EF\u91CD\u590D\u7684\u5C0F\u5B9E\u9A8C\u3002\n\n- [ ] \u9A8C\u8BC1\u5F02\u5E38\u8FD4\u56DE ^demo-api-error\n- [ ] \u8BB0\u5F55\u8BF7\u6C42\u4E0E\u54CD\u5E94" },
+      { id: "note-research", path: "lessons/research/\u8D44\u6599\u63D0\u7EB2.md", version: 1, text: "# \u8D44\u6599\u63D0\u7EB2\n\n\u5148\u6574\u7406\u6750\u6599\u4E4B\u95F4\u7684\u5173\u7CFB\uFF0C\u518D\u51B3\u5B9A\u4E0B\u4E00\u6B21\u9605\u8BFB\u3002\n\n- [ ] \u5199\u4E0B\u5F85\u9A8C\u8BC1\u7684\u95EE\u9898\n- [ ] \u5BF9\u7167\u539F\u59CB\u6750\u6599" }
+    ];
+    const edits = [1, 0, 2, 3, 1], hours = [8, 10, 12, 14, 16];
+    state.observations = state.notes.map((n) => ({ noteId: n.id, date: "2026-11-20" }));
+    for (let i = 0; i < 5; i++) {
+      const hour = hours[i], minute = 4 + edits[i] * 12;
+      const start = /* @__PURE__ */ new Date(`2026-11-20T${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}:00+08:00`);
+      const note = state.notes[(i + edits[i]) % 5];
+      state.sessions.push({ id: `demo-session-${i}`, noteId: note.id, start: start.toISOString(), end: new Date(start.getTime() + [18, 24, 16, 28, 22][i] * 6e4).toISOString(), estimated: true, reason: "pause" });
+    }
+    for (let day = 1; day < 7; day++) {
+      const date = `2026-11-${20 - day}`;
+      state.sessions.push({ id: `demo-past-${day}`, noteId: state.notes[day % 5].id, start: `${date}T09:00:00+08:00`, end: `${date}T09:${[42, 28, 36, 48, 24, 32][day - 1]}:00+08:00`, estimated: true, reason: "pause" });
+    }
+    return state;
+  }
+
+  // src/adapters/browser/memory.ts
+  var SimulatedClock = class {
+    constructor(value) {
+      __publicField(this, "value", value);
+    }
+    now() {
+      return new Date(this.value);
+    }
+    advance(minutes) {
+      this.value = new Date(this.value.getTime() + minutes * 6e4);
+    }
+  };
+
+  // src/core/analytics.ts
+  function dailyStats(state, date, config = DEFAULT_CONFIG, context = {}) {
+    const start = (/* @__PURE__ */ new Date(`${date}T00:00:00+08:00`)).getTime();
+    if (!Number.isFinite(start)) throw new Error("\u65E5\u671F\u683C\u5F0F\u4E0D\u6B63\u786E\u3002");
+    const end = start + 864e5;
+    const warnings = [], intervals = [];
+    let previousEnd = -Infinity;
+    const sorted = [...state.sessions].sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+    for (const s of sorted) {
+      const from = new Date(s.start).getTime(), to = new Date(s.end).getTime();
+      if (!Number.isFinite(from) || !Number.isFinite(to) || to <= from || to - from > 864e5) {
+        warnings.push("\u5DF2\u6392\u9664\u65E0\u6548\u65F6\u95F4\u533A\u95F4");
+        continue;
+      }
+      const uniqueStart = Math.max(from, previousEnd);
+      if (uniqueStart > from) warnings.push("\u5DF2\u53BB\u9664\u91CD\u53E0\u65F6\u95F4");
+      previousEnd = Math.max(previousEnd, to);
+      const a = Math.max(uniqueStart, start), b = Math.min(to, end);
+      if (b > a) intervals.push({ ...s, start: new Date(a).toISOString(), end: new Date(b).toISOString(), minutes: (b - a) / 6e4 });
+    }
+    const completed = state.completions.filter((e) => localDate(e.at) === date), receipts = state.receipts.filter((r) => localDate(r.at) === date);
+    const tasks = context.tasks ?? state.taskRegistry, visible = tasks.filter((t) => !t.deletedAt), catalog = moduleCatalog(state, context.manualModules, context.hiddenModules, config), byId = new Map(tasks.map((t) => [t.id, t]));
+    const modules = /* @__PURE__ */ new Map();
+    function group(noteId, task) {
+      const ref = moduleForTask(task, noteId, state, catalog, context.manualModules, config);
+      if (!modules.has(ref.id)) modules.set(ref.id, { ...ref, minutes: 0, completed: 0, pending: 0 });
+      return modules.get(ref.id);
+    }
+    for (const s of intervals) group(s.noteId).minutes += s.minutes;
+    for (const taskId of new Set(completed.map((e) => e.taskId))) {
+      const e = completed.find((e2) => e2.taskId === taskId);
+      group(e.noteId, byId.get(taskId)).completed++;
+    }
+    for (const task of visible) {
+      const g = group(task.noteId, task);
+      if (!task.done) g.pending++;
+    }
+    for (const ref of catalog.filter((m) => m.kind === "manual")) if (!modules.has(ref.id)) modules.set(ref.id, { ...ref, minutes: 0, completed: 0, pending: 0 });
+    const noteIds = /* @__PURE__ */ new Set([...state.observations.filter((a) => a.date === date).map((a) => a.noteId), ...intervals.map((s) => s.noteId)]);
+    return { date, total: visible.length, pending: visible.filter((t) => !t.done).length, completed: new Set(completed.map((e) => e.taskId)).size, collected: new Set(receipts.flatMap((r) => r.taskIds)).size, notes: noteIds.size, activeMinutes: intervals.reduce((n, i) => n + i.minutes, 0), intervals, modules: [...modules.values()].sort((a, b) => b.minutes - a.minutes), warnings: [...new Set(warnings)] };
+  }
+  function recentDays(date, count = 7) {
+    const last = /* @__PURE__ */ new Date(`${date}T12:00:00+08:00`);
+    return Array.from({ length: count }, (_, i) => localDate(new Date(last.getTime() - (count - 1 - i) * 864e5)));
+  }
+  function minutesLabel(minutes) {
+    if (minutes <= 0) return "\u672A\u8BB0\u5F55";
+    if (minutes < 1) return "<1 \u5206\u949F";
+    const value = Math.round(minutes);
+    return value >= 60 ? `${Math.floor(value / 60)} \u5C0F\u65F6${value % 60 ? ` ${value % 60} \u5206\u949F` : ""}` : `${value} \u5206\u949F`;
+  }
+
+  // src/ui/statistics/view.ts
+  function dateControls(date) {
+    const adjacent = (offset) => localDate(new Date(Date.parse(`${date}T12:00:00+08:00`) + offset * 864e5));
+    return `<div class="statistics-date-control"><button data-action="day" data-date="${adjacent(-1)}" aria-label="\u4E0A\u4E00\u5929">\u2039</button><label><span class="sr-only">\u7EDF\u8BA1\u65E5\u671F</span><input id="stats-date" type="date" value="${date}" aria-label="\u7EDF\u8BA1\u65E5\u671F"></label><button data-action="day" data-date="${adjacent(1)}" aria-label="\u4E0B\u4E00\u5929">\u203A</button></div>`;
+  }
+  function renderStatistics(state, date, context) {
+    const { title: title2, time: time2 } = context, s = dailyStats(state, date, DEFAULT_CONFIG, context.source), days = recentDays(date).map((d) => dailyStats(state, d, DEFAULT_CONFIG, context.source)), max = Math.max(0, ...days.map((d) => d.activeMinutes));
+    return `<main id="main" tabindex="-1" class="statistics-view note-workspace-statistics">${context.dateControls ? dateControls(date) : ""}<div class="stat-summary"><div data-stat="total"><span>\u7D2F\u8BA1\u4EFB\u52A1</span><strong>${s.total}<small>\u9879</small></strong></div><div data-stat="new"><span>\u5F53\u65E5\u65B0\u589E</span><strong>${s.collected}<small>\u9879</small></strong></div><div data-stat="completed"><span>\u5F53\u65E5\u5B8C\u6210</span><strong>${s.completed}<small>\u9879</small></strong></div><div data-stat="notes"><span>\u6D89\u53CA\u7B14\u8BB0</span><strong>${s.notes}<small>\u7BC7</small></strong></div><div data-stat="duration"><span>\u5DF2\u8BB0\u5F55\u65F6\u957F</span><strong class="duration">${s.activeMinutes ? escapeHtml(minutesLabel(s.activeMinutes)) : "\u672A\u8BB0\u5F55"}</strong></div></div><details class="statistics-provenance"><summary>\u67E5\u770B\u7EDF\u8BA1\u53E3\u5F84</summary><p>\u7D2F\u8BA1\u4EFB\u52A1\u662F\u5F53\u524D\u6E05\u5355\u5168\u90E8\u672A\u5220\u9664\u5F85\u529E\u4E0E\u5B8C\u6210\u9879\u3002\u5F53\u65E5\u65B0\u589E\u6309\u6240\u9009\u65E5\u671F\u9996\u6B21\u6536\u5F55\u6216\u521B\u5EFA\u7684\u4EFB\u52A1\u53BB\u91CD\u8BA1\u6570\uFF0C\u5220\u9664\u4E0D\u4F1A\u91CD\u5199\u5386\u53F2\uFF1B\u5F53\u65E5\u5B8C\u6210\u6309\u5F53\u5929\u5B8C\u6210\u8FC7\u7684\u4EFB\u52A1\u53BB\u91CD\u3002\u8FD1\u4E03\u5929\u6C47\u603B\u4FDD\u5B58\u7684\u6D3B\u52A8\u533A\u95F4\uFF0C\u6309\u4E0A\u6D77\u65E5\u671F\u62C6\u5206\u5E76\u53BB\u9664\u91CD\u590D\u8986\u76D6\u3002</p></details>${s.warnings.length ? `<p class="data-note">${s.warnings.map(escapeHtml).join("\uFF1B")}\u3002</p>` : ""}<div class="stats-columns"><section><div class="section-heading"><h2>\u8FD1\u4E03\u5929</h2><span>\u5DF2\u8BB0\u5F55\u65F6\u957F</span></div><div class="week-chart">${days.map((d) => `<button data-seconds="${d.activeMinutes * 60}" class="week-day ${d.date === date ? "current" : ""}" data-action="day" data-date="${d.date}" aria-label="${d.date}\uFF0C${d.activeMinutes ? minutesLabel(d.activeMinutes) : "\u672A\u8BB0\u5F55"}"><span class="week-value">${d.activeMinutes ? d.activeMinutes < 1 ? "<1m" : Math.round(d.activeMinutes) + "m" : "\u2014"}</span><span class="week-bar" style="height:${max > 0 ? d.activeMinutes / max * 88 : 0}px"></span><span class="week-date"><span class="week-month">${d.date.slice(5, 7)}/</span><span>${d.date.slice(8)}</span></span></button>`).join("")}</div></section></div><section class="details-section"><div class="section-heading"><h2>\u6D3B\u52A8\u660E\u7EC6</h2><span>\u4EFB\u52A1\u7528\u65F6\u53EA\u5728\u660E\u786E\u8BA1\u65F6\u540E\u8BB0\u5F55</span></div><div class="table-scroll"><table><caption class="sr-only">\u5F53\u65E5\u6D3B\u52A8\u660E\u7EC6</caption><thead><tr><th>\u65F6\u95F4\u6BB5</th><th>\u7B14\u8BB0 / \u4EFB\u52A1</th><th>\u8BB0\u5F55\u65B9\u5F0F</th><th>\u8BB0\u5F55\u65F6\u957F</th><th>\u4EFB\u52A1\u7528\u65F6</th></tr></thead><tbody>${s.intervals.map((v) => `<tr><td>${time2(v.start)}\u2014${time2(v.end)}</td><td><button class="text-button" data-action="source-note" data-note="${escapeHtml(v.noteId)}" data-line="0">${escapeHtml(title2(v.noteId))}</button></td><td>${v.taskId ? "\u4EFB\u52A1\u8BA1\u65F6" : "\u7B14\u8BB0\u6D3B\u52A8"}</td><td>${escapeHtml(minutesLabel(v.minutes))}</td><td>${v.taskId ? escapeHtml(minutesLabel(v.minutes)) : "\u672A\u8BB0\u5F55"}</td></tr>`).join("") || '<tr><td colspan="5">\u6682\u65E0\u8BB0\u5F55</td></tr>'}</tbody></table></div></section></main>`;
+  }
+  function renderModuleDistribution(state, date, source = {}) {
+    const s = dailyStats(state, date, DEFAULT_CONFIG, source), visible = s.modules.filter((m) => !m.hidden);
+    const paths = (name) => [...new Set(state.notes.filter((n) => s.intervals.some((i) => i.noteId === n.id)).filter((n) => moduleForPath(n.path) === name).map((n) => n.path.includes("/") ? n.path.slice(0, n.path.lastIndexOf("/") + 1) : n.path))].join("\u3001");
+    return `<section class="module-card" aria-label="\u6A21\u5757\u5206\u5E03"><div class="section-heading"><h2>\u6A21\u5757\u5206\u5E03</h2><span>\u5DF2\u8BB0\u5F55\u65F6\u957F</span></div><div class="module-total"><strong>${s.activeMinutes ? escapeHtml(minutesLabel(s.activeMinutes)) : "\u6682\u65E0\u8BB0\u5F55"}</strong><span>${date.slice(5).replace("-", "\u6708")}\u65E5</span></div>${visible.length ? `<ul class="module-list">${visible.map((m) => {
+      const share = s.activeMinutes > 0 ? Math.max(0, Math.min(100, m.minutes / s.activeMinutes * 100)) : 0;
+      return `<li data-module="${escapeHtml(m.name)}" data-module-id="${escapeHtml(m.id)}" data-module-kind="${m.kind}" data-seconds="${m.minutes * 60}" data-completed="${m.completed}" title="${escapeHtml(paths(m.name))} \xB7 ${Math.round(m.minutes * 60)} \u79D2"><div><button class="module-open" data-action="module-menu" data-module-id="${escapeHtml(m.id)}" aria-label="\u7BA1\u7406\u6A21\u5757 ${escapeHtml(m.name)}">${escapeHtml(m.name)}</button><span class="module-meta"><span>${escapeHtml(minutesLabel(m.minutes))}</span><span>\xB7 ${m.completed} \u9879\u5B8C\u6210</span></span></div><div class="module-track" role="img" aria-label="${escapeHtml(m.name)}\uFF0C\u5360\u8BB0\u5F55\u65F6\u957F ${share.toFixed(1)}%"><span style="width:${share}%"></span></div></li>`;
+    }).join("")}</ul>` : '<p class="empty">\u6682\u65E0\u6A21\u5757\u8BB0\u5F55\u3002</p>'}${s.modules.some((m) => m.hidden && m.kind === "source") ? `<details class="hidden-module-list"><summary>\u5DF2\u9690\u85CF\u6A21\u5757</summary>${s.modules.filter((m) => m.hidden && m.kind === "source").map((m) => `<button data-action="restore-module" data-module-id="${escapeHtml(m.id)}">\u91CD\u65B0\u663E\u793A ${escapeHtml(m.name)}</button>`).join("")}</details>` : ""}<details class="module-provenance"><summary>\u67E5\u770B\u8BB0\u5F55\u53E3\u5F84</summary><p>\u7B14\u8BB0\u6309\u6587\u4EF6\u5939\u5F52\u7C7B\uFF0C\u624B\u52A8\u5F85\u529E\u6309\u6807\u7B7E\u5F52\u7C7B\uFF1B\u5B8C\u6210\u6570\u53EA\u8BA1\u5165\u7B2C\u4E00\u4E2A\u4E3B\u6807\u7B7E\uFF0C\u907F\u514D\u91CD\u590D\u3002\u6C47\u603B\u5DF2\u4FDD\u5B58\u7684\u6D3B\u52A8\u533A\u95F4\u3002\u7A7A\u95F2\u3001\u5173\u95ED\u5E94\u7528\u53CA\u672A\u8BB0\u5F55\u65F6\u6BB5\u4E0D\u8BA1\u5165\uFF1B\u5B8C\u6210\u6570\u6765\u81EA\u672C\u63D2\u4EF6\u7684\u5B8C\u6210\u8BB0\u5F55\u3002</p></details></section>`;
+  }
+
+  // src/ui/workspace/tasks.ts
+  var link = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m10 13 4-4M8 15l-1 1a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0m2 2 1-1a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/></svg>';
+  function renderTasks(c2, filter2, href, expanded = /* @__PURE__ */ new Set(), moduleId) {
+    const tasks = orderByDeadline(c2.tasks.filter((t) => t.done === (filter2 === "done") && (!moduleId || c2.taskInModule(t, moduleId))));
+    const fileLink = (noteId, line, compact = false, header2 = false) => `<a class="${header2 ? "task-file-link" : "note-link readonly-note-link"}${compact ? " compact-source-link" : ""}" href="${escapeHtml(href(noteId))}" data-action="source-note" data-note="${escapeHtml(noteId)}" data-line="${line}" title="${escapeHtml(c2.state.notes.find((n) => n.id === noteId)?.path ?? "")}" aria-label="\u6253\u5F00\u6E90\u7B14\u8BB0 ${escapeHtml(c2.title(noteId))}${header2 ? "" : "\u7684\u4EFB\u52A1\u884C"}">${link}${compact ? "" : `<span>${escapeHtml(c2.title(noteId))}</span>`}</a>`;
+    const item = (t, compact = false) => {
+      const name = displayTaskName(t), status = deadlineState(t, c2.now().getTime()), warning2 = status === "warning" || status === "overdue", help = "task-help-" + t.id, hint = deadlineHint(t);
+      const tags = t.origin === "manual" ? (t.moduleIds ?? []).map((id2) => c2.modules.find((m) => m.id === id2)).filter((m) => m && m.id !== "manual-inbox") : [];
+      return `<li class="task-item ${t.done ? "done" : ""} ${warning2 ? "deadline-warning" : ""}" data-task-item="${escapeHtml(t.id)}" data-deadline-state="${status}"><input type="checkbox" data-complete="${escapeHtml(t.id)}" aria-label="${t.done ? "\u91CD\u65B0\u6253\u5F00" : "\u5B8C\u6210"}\u4EFB\u52A1\uFF1A${escapeHtml(name)}" ${t.done ? "checked" : ""}><div class="task-copy readonly-task-copy"><button class="task-title-button" data-action="edit-task" data-task="${escapeHtml(t.id)}" ${hint ? `aria-describedby="${escapeHtml(help)}"` : ""}>${escapeHtml(name)}</button>${hint ? `<span id="${escapeHtml(help)}" class="task-time-description" hidden>${escapeHtml(hint)}</span>` : ""}${tags.length ? `<div class="task-tags">${tags.map((m) => `<span>#${escapeHtml(m.name)}</span>`).join("")}</div>` : ""}${t.sourceUnavailable ? "<small>\u6765\u6E90\u4E0D\u53EF\u7528</small>" : ""}</div>${t.origin === "manual" ? '<span class="manual-task-label">\u624B\u52A8</span>' : t.sourceUnavailable ? "" : fileLink(t.noteId, t.line, compact)}</li>`;
+    };
+    const counts = /* @__PURE__ */ new Map();
+    for (const t of c2.tasks) counts.set(t.noteId, (counts.get(t.noteId) ?? 0) + 1);
+    const rendered = /* @__PURE__ */ new Set();
+    const rows = tasks.map((t) => {
+      if (filter2 === "pending" && t.dueAt || t.origin === "manual" || (counts.get(t.noteId) ?? 0) <= 5) return item(t);
+      if (rendered.has(t.noteId)) return "";
+      rendered.add(t.noteId);
+      const group = tasks.filter((task) => task.noteId === t.noteId && (filter2 === "done" || !task.dueAt)), unavailable = c2.data.deletedNotes.includes(t.noteId);
+      return `<li class="task-file-container"><details class="task-file-group" data-task-group="${escapeHtml(t.noteId)}" ${expanded.has(t.noteId) ? "open" : ""}><summary><span class="task-file-title" title="${escapeHtml(c2.state.notes.find((n) => n.id === t.noteId)?.path ?? "")}">${escapeHtml(c2.title(t.noteId))}</span><span class="task-file-count">${group.length} \u6761</span><svg class="task-file-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>${unavailable ? '<span class="source-unavailable">\u6765\u6E90\u4E0D\u53EF\u7528</span>' : fileLink(t.noteId, 0, true, true)}</summary><ul class="task-list readonly-tasks task-file-children">${group.map((task) => item(task, true)).join("")}</ul></details></li>`;
+    }).join("");
+    return `<div class="task-create-surface" data-task-surface>${moduleId ? `<div class="module-task-filter"><span>\u6A21\u5757\uFF1A${escapeHtml(c2.modules.find((m) => m.id === moduleId)?.name ?? "\u5168\u90E8")}</span><button data-action="clear-module">\u67E5\u770B\u5168\u90E8</button></div>` : ""}<nav class="task-filters" aria-label="\u4EFB\u52A1\u72B6\u6001"><button data-action="filter" data-filter="pending" aria-pressed="${filter2 === "pending"}">\u5F85\u529E ${c2.pending.length}</button><button data-action="filter" data-filter="done" aria-pressed="${filter2 === "done"}">\u5DF2\u5B8C\u6210 ${c2.tasks.length - c2.pending.length}</button></nav><ul class="task-list readonly-tasks">${rows || `<li class="empty">${filter2 === "done" ? "\u8FD8\u6CA1\u6709\u5DF2\u5B8C\u6210\u4EFB\u52A1\u3002" : "\u6CA1\u6709\u5F85\u529E\uFF1B\u8BBF\u95EE\u7B14\u8BB0\u540E\u4F1A\u8BFB\u53D6\u4EFB\u52A1\u3002"}</li>`}</ul><button class="task-create-button" data-action="new-task"><span aria-hidden="true">\uFF0B</span><span>\u5199\u4E0B\u4E00\u4E2A\u5F85\u529E</span></button><div class="task-blank-area" aria-hidden="true"></div></div>`;
+  }
+
+  // src/preview.ts
+  var KEY = "note-trajectory-workspace-preview-v2";
+  var app = document.querySelector("#app");
+  app.classList.add("note-workspace-root");
+  var icon = { down: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>' };
+  var time = (at) => new Intl.DateTimeFormat("zh-CN", { timeZone: "Asia/Shanghai", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(at));
+  function fresh() {
+    const state = demoState(), sources2 = state.notes.map((n) => ({ path: n.path, text: n.text }));
+    const tasks = state.notes.flatMap((n) => extractTasks(n).map((t) => ({ ...t, collectedAt: "2026-11-20T08:04:00+08:00" })));
+    state.receipts = state.notes.map((n) => ({ id: id("receipt"), noteId: n.id, taskIds: tasks.filter((t) => t.noteId === n.id).map((t) => t.id), at: "2026-11-20T08:04:00+08:00" }));
+    for (const note of state.notes) note.text = "";
+    state.taskRegistry = [];
+    return { format: "note-trajectory-standalone", schemaVersion: 2, workspace: { schemaVersion: 5, manualModules: [], hiddenModules: [], state, tasks, decisions: {}, deletedNotes: [] }, sources: sources2, now: DEMO_NOW };
+  }
+  function validate(raw) {
+    const d = raw;
+    if (!d || d.format !== "note-trajectory-standalone" || d.schemaVersion !== 2 || !Array.isArray(d.sources) || d.sources.some((n) => !n || typeof n.path !== "string" || typeof n.text !== "string") || !Number.isFinite(Date.parse(d.now))) throw new Error("\u4E0D\u53D7\u652F\u6301\u7684\u6F14\u793A\u6570\u636E\uFF0C\u539F\u6570\u636E\u672A\u4FEE\u6539\u3002");
+    const copy = structuredClone(d);
+    copy.workspace = validateWorkspace(d.workspace);
+    return copy;
+  }
+  var initial = fresh();
+  var warning = "";
+  try {
+    const data = localStorage.getItem(KEY);
+    if (data) initial = validate(JSON.parse(data));
+  } catch {
+    warning = "\u5DF2\u6709\u6570\u636E\u65E0\u6CD5\u8BFB\u53D6\u3002\u539F\u5B58\u50A8\u5DF2\u4FDD\u7559\uFF0C\u8BF7\u5148\u5BFC\u51FA\u6216\u68C0\u67E5\uFF1B\u4E0D\u4F1A\u81EA\u52A8\u8986\u76D6\u3002";
+  }
+  var sources = initial.sources;
+  var clock = new SimulatedClock(new Date(initial.now));
+  var failNext = false;
+  var c;
+  var tasksOpen = false;
+  var filter = "pending";
+  var desk = false;
+  var selected = sources[0]?.path ?? "";
+  var statsDate = localDate(clock.now());
+  var expandedTaskFiles = /* @__PURE__ */ new Set();
+  var lastDeleted = null;
+  var moduleFilter;
+  var hints;
+  var homeDate = "";
+  var unsub;
+  var files = /* @__PURE__ */ new Map();
+  var file = (path) => {
+    if (!files.has(path)) files.set(path, { path, extension: "md", stat: { size: 100 } });
+    return files.get(path);
+  };
+  var promptTail = Promise.resolve();
+  function confirmImport(question) {
+    const result = promptTail.then(() => new Promise((resolve) => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "nt-import-dialog";
+      dialog.innerHTML = `<h2>\u8BFB\u53D6\u8FD9\u7BC7\u7B14\u8BB0\u7684\u5F85\u529E\uFF1F</h2><p>${escapeHtml(question.path)}</p><p>\u8FD9\u7BC7\u7B14\u8BB0\u6709 ${question.count} \u6761\u672A\u5B8C\u6210\u5F85\u529E\uFF0C\u8D85\u8FC7 5 \u6761\u3002\u5141\u8BB8\u540E\u4F1A\u5168\u90E8\u5BFC\u5165\uFF0C\u540E\u7EED\u65B0\u589E\u4E5F\u4F1A\u6301\u7EED\u540C\u6B65\u3002</p><p>\u8DF3\u8FC7\u540E\u53EF\u70B9\u51FB\u5DE5\u4F5C\u53F0\u7684\u201C\u91CD\u65B0\u8BFB\u53D6\u5F85\u529E\u201D\u3002</p><div class="action-row"><button class="quiet-button" data-import-choice="skip">\u6682\u4E0D\u8BFB\u53D6</button><button class="primary-button" data-import-choice="allow">\u8BFB\u53D6\u6B64\u6587\u4EF6\u7684\u5F85\u529E</button></div>`;
+      dialog.addEventListener("click", (e) => {
+        const choice = e.target.closest("[data-import-choice]");
+        if (choice) dialog.close(choice.dataset.importChoice);
+      });
+      dialog.addEventListener("close", () => {
+        const allow = dialog.returnValue === "allow";
+        dialog.remove();
+        resolve(allow);
+      }, { once: true });
+      document.body.append(dialog);
+      dialog.showModal();
+      dialog.querySelector("[data-import-choice=skip]").focus();
+    }));
+    promptTail = result.catch(() => {
+    });
+    return result;
+  }
+  function setup(data) {
+    unsub?.();
+    hints?.dispose();
+    c = new WorkspaceController({ async read(f) {
+      return { text: sources.find((n) => n.path === f.path)?.text ?? "", indexed: true };
+    } }, clock, { async save(workspace) {
+      if (warning) throw new Error("\u539F\u6570\u636E\u5F85\u68C0\u67E5\uFF0C\u505C\u6B62\u8986\u76D6\u3002");
+      if (failNext) {
+        failNext = false;
+        throw new Error("\u6A21\u62DF\u78C1\u76D8\u4FDD\u5B58\u5931\u8D25");
+      }
+      localStorage.setItem(KEY, JSON.stringify({ format: "note-trajectory-standalone", schemaVersion: 2, workspace, sources, now: clock.now().toISOString() }));
+    } }, confirmImport, data);
+    unsub = c.subscribe(render);
+    hints = bindTaskHints(app, c);
+  }
+  setup(initial.workspace);
+  var title = (noteId) => c.title(noteId);
+  var isStats = () => location.hash.startsWith("#statistics");
+  function header() {
+    return `<header class="topbar"><div class="identity"><h1>${isStats() ? "\u6BCF\u65E5\u7EDF\u8BA1" : "\u5F85\u529E\u6E05\u5355"}</h1><span class="date-caption">${(isStats() ? statsDate : localDate(clock.now())).replaceAll("-", ".")}</span></div><button class="quiet-button stats-entry" data-action="stats">${isStats() ? "\u8FD4\u56DE\u4EFB\u52A1" : "\u7EDF\u8BA1"}</button></header>`;
+  }
+  function footer() {
+    return `<footer class="page-footer"><span>\u672C\u5730\u6F14\u793A \xB7 \u5168\u90E8\u4E3A\u5408\u6210\u6570\u636E</span><button class="text-button" data-action="desk">${desk ? "\u6536\u8D77" : "\u6253\u5F00"}\u6F14\u793A\u5DE5\u4F5C\u53F0</button></footer><section class="workbench" id="workbench" ${desk ? "" : "hidden"}><h2>\u6F14\u793A\u5DE5\u4F5C\u53F0</h2><p class="data-note">\u72EC\u7ACB\u4EFB\u52A1\u7BA1\u7406 \xB7 \u65E0\u9700\u770B\u677F\u5206\u53D1</p><div class="workbench-grid"><div><label for="note-picker">\u6A21\u62DF\u7B14\u8BB0</label><select id="note-picker">${sources.map((n) => `<option ${n.path === selected ? "selected" : ""} value="${escapeHtml(n.path)}">${escapeHtml(n.path)}</option>`).join("")}</select><label for="note-editor">\u7B14\u8BB0\u5185\u5BB9</label><textarea id="note-editor" rows="8">${escapeHtml(sources.find((n) => n.path === selected)?.text ?? "")}</textarea><div class="action-row"><button class="primary-button" data-action="save">\u4FDD\u5B58\u6A21\u62DF\u7B14\u8BB0</button><button class="quiet-button" data-action="visit">\u8BB0\u5F55\u8BBF\u95EE</button><button class="quiet-button" data-action="recheck">\u91CD\u65B0\u8BFB\u53D6\u5F85\u529E</button><button class="quiet-button" data-action="bulk-demo">\u521B\u5EFA 7 \u6761\u5F85\u529E\u7684\u6D4B\u8BD5\u7B14\u8BB0</button></div></div><div><h3>\u6A21\u62DF\u65F6\u949F</h3><output>${localDate(clock.now())} ${time(clock.now().toISOString())}</output><div class="action-row"><button class="quiet-button" data-action="advance">\u63A8\u8FDB 30 \u5206\u949F</button></div><div class="action-row"><button class="quiet-button" data-action="fail">\u4E0B\u6B21\u4FDD\u5B58\u5931\u8D25</button><button class="quiet-button" data-action="retry-save">\u91CD\u8BD5\u4FDD\u5B58</button></div><h3>\u6F14\u793A\u6570\u636E</h3><div class="action-row"><button class="quiet-button" data-action="export">\u5BFC\u51FA JSON</button><button class="quiet-button" data-action="import">\u5BFC\u5165 JSON</button></div><input type="file" id="import-file" accept=".json,application/json" hidden></div></div></section><p class="toast" id="status" role="status" aria-live="polite"></p>`;
+  }
+  function render() {
+    hints?.hide();
+    homeDate = localDate(clock.now());
+    const body = isStats() ? renderStatistics(c.state, statsDate, { title, time, dateControls: true, source: c.analyticsContext }) : `<main id="main" tabindex="-1" class="workspace-view"><div class="home-modules note-workspace-statistics">${renderModuleDistribution(c.state, localDate(clock.now()), c.analyticsContext)}</div><section class="tasks-section"><div class="disclosure-heading"><button class="icon-button" id="tasks-toggle" data-action="tasks" aria-expanded="${tasksOpen}" aria-controls="tasks-body" aria-label="${tasksOpen ? "\u6536\u8D77" : "\u5C55\u5F00"}\u4EFB\u52A1">${icon.down}</button><span class="tasks-label shown">\u5F85\u529E</span><button class="task-add-header" data-action="new-task" aria-label="\u521B\u5EFA\u5F85\u529E">\uFF0B</button></div><div id="tasks-body" class="disclosure ${tasksOpen ? "open" : ""}" ${tasksOpen ? "" : "inert"}><div class="disclosure-inner">${renderTasks(c, filter, (_id) => "#workbench", expandedTaskFiles, moduleFilter)}${lastDeleted ? `<p class="task-undo" role="status">\u5DF2\u5220\u9664\u5F85\u529E <button data-action="undo-delete" data-task="${escapeHtml(lastDeleted)}">\u64A4\u9500\u5220\u9664</button></p>` : ""}</div></div></section></main>`;
+    app.innerHTML = `${header()}${warning || c.storageError ? `<p class="storage-error" role="alert">${escapeHtml(warning || c.storageError)} <button data-action="retry-save">\u91CD\u8BD5\u4FDD\u5B58</button></p>` : ""}${body}${footer()}`;
+  }
+  function notify(message) {
+    const el = document.querySelector("#status");
+    if (el) {
+      el.textContent = message;
+      el.classList.add("visible");
+    }
+  }
+  async function run(work) {
+    try {
+      await work();
+      await c.ready();
+      render();
+      notify("\u5DF2\u4FDD\u5B58\u3002");
+    } catch (error) {
+      render();
+      notify(error instanceof Error ? error.message : String(error));
+    }
+  }
+  function showNote(noteId) {
+    const n = c.state.notes.find((n2) => n2.id === noteId);
+    if (n) {
+      selected = n.path;
+      desk = true;
+      render();
+      document.querySelector("#workbench")?.scrollIntoView({ block: "start" });
+      document.querySelector("#note-editor")?.focus();
+    }
+  }
+  function openEditor(taskId) {
+    tasksOpen = true;
+    render();
+    const task = taskId ? c.tasks.find((t) => t.id === taskId) : void 0;
+    if (taskId && !task) return;
+    const dialog = document.createElement("dialog");
+    dialog.className = "note-workspace-root task-editor-dialog";
+    dialog.setAttribute("aria-label", task ? "\u7F16\u8F91\u5F85\u529E" : "\u65B0\u5EFA\u5F85\u529E");
+    dialog.innerHTML = `<h2>${task ? "\u7F16\u8F91\u5F85\u529E" : "\u65B0\u5EFA\u5F85\u529E"}</h2>${taskEditor(task)}`;
+    document.body.append(dialog);
+    dialog.showModal();
+    const unbind = bindTaskEditor(dialog, c, task, () => dialog.close(), (id2) => {
+      lastDeleted = id2;
+      render();
+    });
+    dialog.addEventListener("close", () => {
+      unbind();
+      dialog.remove();
+      ((taskId ? app.querySelector('[data-action=edit-task][data-task="' + CSS.escape(taskId) + '"]') : null) ?? app.querySelector(".task-add-header"))?.focus();
+    }, { once: true });
+  }
+  function openModule(moduleId) {
+    const module = c.modules.find((m) => m.id === moduleId);
+    if (!module) return;
+    const dialog = document.createElement("dialog");
+    dialog.className = "note-workspace-root task-editor-dialog module-editor-dialog";
+    dialog.setAttribute("aria-label", "\u7BA1\u7406\u6A21\u5757");
+    dialog.innerHTML = `<h2>\u7BA1\u7406\u6A21\u5757</h2>${moduleEditor(c, module)}`;
+    document.body.append(dialog);
+    dialog.showModal();
+    const unbind = bindModuleEditor(dialog, c, module, () => dialog.close(), (id2) => {
+      moduleFilter = id2;
+      tasksOpen = true;
+      render();
+    }, (id2) => {
+      if (moduleFilter === id2) moduleFilter = void 0;
+      render();
+    });
+    dialog.addEventListener("close", () => {
+      unbind();
+      dialog.remove();
+      app.querySelector(".task-add-header")?.focus();
+    }, { once: true });
+  }
+  app.addEventListener("toggle", (event) => {
+    const group = event.target;
+    if (group.dataset.taskGroup) {
+      if (group.open) expandedTaskFiles.add(group.dataset.taskGroup);
+      else expandedTaskFiles.delete(group.dataset.taskGroup);
+    }
+  }, { capture: true });
+  app.addEventListener("click", (e) => {
+    const blank = taskClick(e.target);
+    if (blank) {
+      openEditor(blank.id);
+      return;
+    }
+    const b = e.target.closest("button,a[data-action]");
+    if (!b) return;
+    const a = b.dataset.action;
+    if (a === "module-menu") {
+      openModule(b.dataset.moduleId);
+      return;
+    }
+    if (a === "clear-module") {
+      moduleFilter = void 0;
+      render();
+      return;
+    }
+    if (a === "restore-module") {
+      void run(() => c.showModule(b.dataset.moduleId));
+      return;
+    }
+    if (a === "new-task" || a === "edit-task") {
+      openEditor(b.dataset.task);
+      return;
+    }
+    if (a === "undo-delete") {
+      void run(async () => {
+        await c.restoreTask(b.dataset.task);
+        lastDeleted = null;
+      });
+      return;
+    }
+    if (a === "source-note") {
+      e.preventDefault();
+      showNote(b.dataset.note);
+      return;
+    }
+    if (a === "tasks") {
+      tasksOpen = !tasksOpen;
+      render();
+      return;
+    }
+    if (a === "filter") {
+      filter = b.dataset.filter === "done" ? "done" : "pending";
+      render();
+      return;
+    }
+    if (a === "stats") {
+      if (!isStats()) c.pause();
+      location.hash = isStats() ? "home" : "statistics";
+      return;
+    }
+    if (a === "desk") {
+      desk = !desk;
+      render();
+      return;
+    }
+    if (a === "day") {
+      statsDate = b.dataset.date;
+      render();
+      return;
+    }
+    if (a === "recheck") {
+      void run(async () => {
+        await c.open(file(selected));
+        const n = c.state.notes.find((n2) => n2.path === selected);
+        if (n) await c.collect(n.id, true);
+      });
+      return;
+    }
+    if (a === "save") {
+      const text = document.querySelector("#note-editor").value, path = selected;
+      void run(async () => {
+        const source = sources.find((n) => n.path === path);
+        source.text = text;
+        const f = file(path);
+        if (!c.observed.size) await c.open(f);
+        c.edit(f, text);
+        c.indexed(f, text);
+        await c.collect(c.state.notes.find((n) => n.path === path).id);
+      });
+      return;
+    }
+    if (a === "visit") {
+      void run(async () => {
+        await c.open(file(selected));
+      });
+      return;
+    }
+    if (a === "bulk-demo") {
+      const path = "\u5408\u6210\u6D4B\u8BD5/\u591A\u5F85\u529E\u6D4B\u8BD5.md";
+      if (!sources.some((n) => n.path === path)) sources.push({ path, text: "# \u5408\u6210\u591A\u5F85\u529E\u6D4B\u8BD5\n" + Array.from({ length: 7 }, (_, i) => `- [ ] \u6D4B\u8BD5\u5F85\u529E ${i + 1} ^bulk-${i}`).join("\n") });
+      selected = path;
+      void run(async () => {
+        await c.open(file(path));
+      });
+      return;
+    }
+    if (a === "advance") {
+      clock.advance(30);
+      c.checkIdle();
+      void run(() => c.persist());
+      return;
+    }
+    if (a === "fail") {
+      failNext = true;
+      notify("\u4E0B\u6B21\u4FDD\u5B58\u5C06\u5931\u8D25\uFF0C\u53EF\u70B9\u51FB\u91CD\u8BD5\u4FDD\u5B58\u6062\u590D\u3002");
+      return;
+    }
+    if (a === "retry-save") {
+      void run(() => c.persist());
+      return;
+    }
+    if (a === "export") {
+      const data = { format: "note-trajectory-standalone", schemaVersion: 2, workspace: c.snapshot(), sources, now: clock.now().toISOString() }, url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })), link2 = document.createElement("a");
+      link2.href = url;
+      link2.download = "note-trajectory-demo.json";
+      link2.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1e3);
+      return;
+    }
+    if (a === "import") {
+      document.querySelector("#import-file").click();
+      return;
+    }
+  });
+  app.addEventListener("change", (e) => {
+    const input = e.target;
+    if (input.dataset.complete) {
+      void run(() => c.complete(input.dataset.complete, input.checked));
+      return;
+    }
+    if (input.id === "note-picker") {
+      selected = input.value;
+      const editor = document.querySelector("#note-editor");
+      if (editor) editor.value = sources.find((n) => n.path === selected)?.text ?? "";
+      return;
+    }
+    if (input.id === "stats-date") {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(input.value) && Number.isFinite(Date.parse(input.value))) {
+        statsDate = input.value;
+        render();
+      }
+      return;
+    }
+    if (input.id === "import-file" && input.files?.[0]) {
+      const f = input.files[0];
+      if (f.size > 5e6) {
+        notify("\u6587\u4EF6\u8D85\u8FC7\u5BFC\u5165\u4E0A\u9650\u3002");
+        return;
+      }
+      void f.text().then(async (raw) => {
+        const next = validate(JSON.parse(raw));
+        await c.ready();
+        localStorage.setItem(KEY, JSON.stringify(next));
+        unsub?.();
+        sources = next.sources;
+        clock = new SimulatedClock(new Date(next.now));
+        warning = "";
+        setup(next.workspace);
+        expandedTaskFiles.clear();
+        moduleFilter = void 0;
+        selected = sources[0]?.path ?? "";
+        statsDate = localDate(clock.now());
+        render();
+        notify("\u6F14\u793A\u6570\u636E\u5DF2\u5BFC\u5165\u3002");
+      }).catch((error) => notify(String(error)));
+    }
+  });
+  var refreshTime = () => {
+    if (!isStats() && homeDate !== localDate(clock.now())) render();
+    else paintDeadlines(app, c);
+  };
+  window.setInterval(refreshTime, 1e3);
+  window.addEventListener("focus", refreshTime);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) refreshTime();
+  });
+  window.addEventListener("hashchange", render);
+  window.addEventListener("blur", () => c.pause());
+  render();
+})();
+</script></body></html>

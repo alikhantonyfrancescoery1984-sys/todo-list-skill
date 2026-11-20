@@ -1,0 +1,219 @@
+/* Shared visual system: scoped to the operational workspace and its task editor. */
+.note-workspace-root{--paper:#faf9f4;--ink:#1f241f;--muted:#5e665d;--rule:#dcded4;--blue:#244c43;--orange:#ad461c;--surface:#fff;--mint:#e5edce;--aqua:#dceceb;--cream:#f6edb8;--nt-paper:#faf9f4;--nt-ink:#1f241f;--nt-blue:#244c43;--nt-line:#dcded4;--m-in:150ms;--m-press:90ms;--m-panel:200ms;--ease:cubic-bezier(.2,.8,.2,1);color:var(--ink);font-family:"PingFang SC","Noto Sans SC",system-ui,sans-serif;line-height:1.6;color-scheme:light}
+.note-workspace-root *{box-sizing:border-box}
+.note-workspace-root button,.note-workspace-root input,.note-workspace-root textarea{font:inherit}
+.note-workspace-root button{transition:background-color var(--m-in) var(--ease),color var(--m-in) var(--ease),transform var(--m-press) var(--ease);cursor:pointer;touch-action:manipulation}
+.note-workspace-root button:active:not(:disabled){transform:translateY(1px) scale(.985)}
+.note-workspace-root :is(button,a,input,textarea,summary):focus-visible{outline:2px solid var(--blue);outline-offset:3px}
+.note-workspace-root .topbar,.note-workspace-root>header{min-height:88px;height:auto;padding-block:24px;gap:16px}
+.note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:22px;font-weight:600!important;letter-spacing:-.035em;color:var(--ink)!important}
+.note-workspace-root .identity{gap:16px;flex-wrap:wrap}
+.note-workspace-root .date-caption{font-size:12px;letter-spacing:.02em}
+.note-workspace-root .stats-entry,.note-workspace-host header>button{border:0;background:var(--ink);color:var(--paper);border-radius:999px;min-height:44px;padding:8px 20px;font-size:13px;white-space:nowrap}
+.note-workspace-root .home-modules{padding:0 0 24px;border:0}
+.note-workspace-root .module-card{padding:24px;background:var(--mint);border-radius:24px;min-width:0}
+.note-workspace-root .module-card .section-heading{margin-bottom:16px;gap:8px}
+.note-workspace-root .module-card .section-heading h2{font-size:18px;font-weight:500;letter-spacing:-.02em}
+.note-workspace-root .module-card .section-heading>span{font-size:12px;color:#4d5945}
+.note-workspace-root .module-total{display:flex;align-items:baseline;gap:12px;justify-content:space-between;margin-bottom:28px}
+.note-workspace-root .module-total strong{font-size:30px;font-weight:500;letter-spacing:-.045em;line-height:1.25;font-variant-numeric:tabular-nums}
+.note-workspace-root .module-total>span{font-size:12px;white-space:nowrap;color:#4d5945}
+.note-workspace-root .module-list li{margin-bottom:20px}
+.note-workspace-root .module-list li>div:first-child{font-size:15px;align-items:baseline;gap:12px}
+.note-workspace-root .module-list li>div:first-child>span:last-child{font-size:12px;color:#4d5945;text-align:right}
+.note-workspace-root .module-track{height:6px;background:#ccd6b6;border-radius:999px;overflow:hidden;margin-top:10px}
+.note-workspace-root .module-track>span{background:#3e5d40;border-radius:999px;min-height:6px}
+.note-workspace-root .module-list li:nth-child(3n+2) .module-track>span{background:#28655f}
+.note-workspace-root .module-list li:nth-child(3n) .module-track>span{background:#6a6238}
+.note-workspace-root details.module-provenance{margin:8px 0 0;font-size:12px;color:#4d5945}
+.note-workspace-root .module-provenance>summary{min-height:44px;display:flex;align-items:center;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.note-workspace-root .module-provenance>p{padding:8px 0 0;font-size:12px;line-height:1.8}
+.note-workspace-root .tasks-section{margin-top:8px}
+.note-workspace-root .disclosure-heading,.note-workspace-host .readonly-disclosure{gap:8px;margin:0 0 8px}
+.note-workspace-root .tasks-label,.note-workspace-root .tasks-heading{font-size:18px;font-weight:500}
+.note-workspace-root .task-filters{display:flex;gap:8px;border:0;margin:8px 0 16px;padding:4px;background:#eceee5;border-radius:999px;max-width:100%;width:max-content}
+.note-workspace-root .task-filters button{padding:8px 16px;border:0;border-radius:999px;min-width:86px;min-height:44px;color:var(--muted);font-size:13px}
+.note-workspace-root .task-filters button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.note-workspace-root .task-list{padding:0;margin:0;list-style:none}
+.note-workspace-root .task-item{display:flex;align-items:center;gap:8px;min-height:76px;padding:8px;border-radius:16px;margin:4px 0;transition:background-color var(--m-in) var(--ease)}
+.note-workspace-root .task-copy{flex:1;min-width:0}
+.note-workspace-root .task-title-button{display:block;border:0;background:none;box-shadow:none;padding:8px 0;min-height:44px;width:100%;color:var(--ink);text-align:left;font-size:16px;line-height:1.6;overflow-wrap:anywhere;border-radius:6px}
+.note-workspace-root .task-item.done .task-title-button{text-decoration:line-through;color:var(--muted)}
+.note-workspace-root .task-copy small{font-size:12px;color:var(--muted);display:block}
+.note-workspace-root .manual-task-label{font-size:12px;flex:0 0 auto;color:var(--muted);padding:4px 10px;border-radius:999px;background:#eceee5}
+.note-workspace-root .note-link{max-width:28%;font-size:12px;gap:6px;color:var(--blue);line-height:1.5}
+.note-workspace-root .note-link span{text-underline-offset:4px}
+.note-workspace-root .task-item input[type=checkbox]{appearance:none!important;background:none;border:0;box-shadow:none;position:relative;flex:0 0 44px;width:44px;height:44px;margin:0;cursor:pointer;accent-color:var(--blue)}
+.note-workspace-root .task-item input[type=checkbox]::before{display:block!important;content:"";position:absolute;inset:11px;border:1.5px solid #70796b;border-radius:7px;transition:background-color 150ms var(--ease),border-color 150ms var(--ease)}
+.note-workspace-root .task-item input[type=checkbox]:checked::before{background:var(--blue);border-color:var(--blue)}
+.note-workspace-root .task-item input[type=checkbox]:checked::after{display:block!important;content:"";position:absolute;left:18px;top:14px;width:7px;height:12px;border:solid var(--paper);border-width:0 2px 2px 0;transform:rotate(45deg);animation:task-tick 160ms var(--ease)}
+.note-workspace-root .task-create-button{display:flex;align-items:center;gap:12px;min-height:64px;width:100%;padding:12px 18px;margin-top:12px;border:1px dashed #b7bfad;border-radius:16px;color:var(--muted);background:transparent;text-align:left;font-size:14px}
+.note-workspace-root .task-create-button>span:first-child{font-size:24px;line-height:1}
+.note-workspace-root .task-blank-area{height:80px;cursor:text}
+.note-workspace-root .task-file-group{background:var(--surface);border:1px solid #e0e3d8!important;border-radius:18px;margin:12px 0!important;overflow:hidden}
+.note-workspace-root .task-file-group>summary{padding:10px 12px!important;gap:8px;min-height:64px}
+.note-workspace-root .task-file-title{font-size:14px}
+.note-workspace-root .task-file-chevron{transition:transform 180ms var(--ease)}
+.note-workspace-root .task-file-children{padding:0 8px!important}
+.note-workspace-root .task-undo{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:8px 16px;border-radius:14px;background:var(--cream);font-size:13px;animation:task-panel-in var(--m-panel) var(--ease)}
+.note-workspace-root .task-undo button{min-height:44px;color:var(--blue);font-weight:500}
+.note-workspace-root .statistics-view{padding-top:8px}
+.note-workspace-root .stat-summary{gap:16px;border:0;padding:0 0 24px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.note-workspace-root .stat-summary>div{padding:20px;border-radius:20px;background:var(--surface)}
+.note-workspace-root .stat-summary>div:nth-child(2){background:var(--cream)}
+.note-workspace-root .stat-summary>div:nth-child(3){background:var(--aqua)}
+.note-workspace-root .stat-summary>div>span{font-size:12px}
+.note-workspace-root .stat-summary strong{font-size:30px;font-weight:500;margin-top:8px;gap:8px}
+.note-workspace-root .stat-summary strong.duration{font-size:23px;white-space:normal;margin-top:12px}
+.note-workspace-root .stats-columns{display:block;margin-top:16px}
+.note-workspace-root .stats-columns>section{padding:24px;border-radius:24px;background:var(--surface)}
+.note-workspace-root .week-chart{height:160px}
+.note-workspace-root .week-bar{border-radius:999px;background:#c3d2bc;width:22px}
+.note-workspace-root .week-day.current .week-bar{background:var(--blue)}
+.note-workspace-root .details-section{margin-top:32px}
+.note-workspace-root .statistics-date-control button{border-radius:999px;background:#eceee5}
+.note-workspace-root .section-heading>span{font-size:12px}
+.note-workspace-root .page-footer{font-size:12px;gap:16px}
+.note-workspace-host>details:not([data-task-group]){margin-top:8px;color:var(--muted)}
+.note-workspace-root.task-editor-dialog{border:1px solid var(--rule);border-radius:24px;padding:24px;background:var(--paper)!important;color:var(--ink)!important;width:min(480px,calc(100vw - 32px));max-width:480px;animation:task-panel-in var(--m-panel) var(--ease);box-shadow:0 20px 80px #1f241f20}
+.note-workspace-root.task-editor-dialog::backdrop{background:#1f241f66}
+.note-workspace-root.task-editor-dialog h2,.note-workspace-root.task-editor-dialog .modal-title{font-size:20px;font-weight:500;color:var(--ink)!important;margin:0 0 24px}
+.note-workspace-root .task-editor-form label{display:block;font-size:13px;color:var(--muted);margin-bottom:8px}
+.note-workspace-root .task-editor-form textarea{resize:vertical;width:100%;min-height:112px;max-height:50vh;border:1px solid #bac2b3;border-radius:14px;background:var(--surface);color:var(--ink);padding:14px;font-size:16px;line-height:1.6;box-shadow:none}
+.note-workspace-root .editor-context{font-size:12px;color:var(--muted);line-height:1.7;margin:12px 0}
+.note-workspace-root .editor-error{color:#8e321c;font-size:13px;margin:12px 0}
+.note-workspace-root .editor-error[hidden]{display:none}
+.note-workspace-root .editor-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:24px;flex-wrap:wrap}
+.note-workspace-root .editor-actions button{border:0;border-radius:999px;min-height:44px;padding:8px 16px;background:#e9ece2;color:var(--ink);font-size:14px}
+.note-workspace-root .editor-actions .save-task{background:var(--ink);color:var(--paper)}
+.note-workspace-root .editor-actions .delete-task{margin-right:auto;background:none;color:#953c28}
+.note-workspace-root .editor-actions button:disabled{opacity:.5;cursor:wait}
+@keyframes task-panel-in{from{opacity:0;transform:translateY(6px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes task-tick{from{opacity:0;scale:.7}to{opacity:1;scale:1}}
+@media(hover:hover) and (pointer:fine){.note-workspace-root button:hover:not(:disabled):not(:active){transform:translateY(-1px)}.note-workspace-root .task-item:hover{background:#edf0e4}.note-workspace-root .task-create-button:hover{background:#e9eddf;color:var(--ink)}.note-workspace-root .task-title-button:hover{color:var(--blue)}.note-workspace-root .note-link:hover{color:var(--ink)}}
+@media(max-width:640px){.note-workspace-root .module-card{padding:20px;border-radius:22px}.note-workspace-root .module-total strong{font-size:27px}.note-workspace-root .stat-summary>div{padding:16px}.note-workspace-root .stat-summary strong.duration{font-size:20px}.note-workspace-root .module-list li>div:first-child>span:last-child{max-width:60%}.note-workspace-root .stats-columns>section{padding:20px}.note-workspace-root .topbar h1{font-size:20px}.note-workspace-root .task-item{padding-inline:0;gap:4px}}
+@media(prefers-reduced-motion:reduce){.note-workspace-root,.note-workspace-root *,.note-workspace-root *::before,.note-workspace-root *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.note-workspace-root button:hover,.note-workspace-root button:active{transform:none!important}}
+
+.note-workspace-root .task-add-header{margin-left:auto;border:0;border-radius:50%;width:44px;min-height:44px;padding:0;background:var(--cream);font-size:24px;color:var(--ink)}
+
+.note-workspace-root .disclosure-heading .icon-button{margin-left:0}
+
+#app.note-workspace-root{min-height:100vh;background:var(--paper)}
+/* M010: respond to the actual plugin pane, not the application window. */
+.note-workspace-root{container-type:inline-size;container-name:todo-pane;min-width:0}
+.note-workspace-root .topbar h1,.note-workspace-host header>strong{white-space:nowrap;line-height:1.3}
+.note-workspace-root .module-meta{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:2px 6px;min-width:0}
+.note-workspace-root .module-meta>span{white-space:nowrap}
+.note-workspace-root .module-total strong{white-space:nowrap;word-break:keep-all;overflow-wrap:normal}
+@container todo-pane (max-width:540px){
+ .note-workspace-root .topbar,.note-workspace-root .workspace-view,.note-workspace-root .statistics-view,.note-workspace-root .page-footer,.note-workspace-root .workbench{width:100%;padding-inline:16px}
+ .note-workspace-host .statistics-view{padding-inline:0}
+ .note-workspace-root .module-total{flex-wrap:wrap;gap:8px}
+ .note-workspace-root .stat-summary{gap:10px}
+ .note-workspace-root .section-heading{flex-wrap:wrap}
+}
+@container todo-pane (max-width:360px){
+ .note-workspace-root .topbar,.note-workspace-root .workspace-view,.note-workspace-root .statistics-view,.note-workspace-root .page-footer,.note-workspace-root .workbench{padding-inline:12px}
+ .note-workspace-host .statistics-view{padding-inline:0}
+ .note-workspace-root .topbar,.note-workspace-host>header{min-height:68px;padding-block:12px;gap:8px}
+ .note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:18px;flex:0 0 auto}
+ .note-workspace-root .identity{gap:4px 8px;min-width:0}
+ .note-workspace-root .date-caption{font-size:11px}
+ .note-workspace-root .stats-entry,.note-workspace-host header>button{min-width:56px;min-height:44px;padding:6px 12px;font-size:12px;flex:0 0 auto}
+ .note-workspace-root .module-card{padding:16px;border-radius:20px}
+ .note-workspace-root .module-card .section-heading{gap:4px}
+ .note-workspace-root .module-card .section-heading h2{font-size:17px}
+ .note-workspace-root .module-card .section-heading>span{font-size:12px}
+ .note-workspace-root .module-total{flex-direction:column;align-items:flex-start;gap:6px;margin-bottom:22px}
+ .note-workspace-root .module-total strong{font-size:clamp(18px,8cqi,26px)}
+ .note-workspace-root .module-list li>div:first-child{flex-direction:column;align-items:flex-start;gap:4px;font-size:14px}
+ .note-workspace-root .module-list li>div:first-child>span:last-child{max-width:100%;text-align:left;font-size:12px}
+ .note-workspace-root .module-meta{justify-content:flex-start}
+ .note-workspace-root .module-provenance>p{overflow-wrap:anywhere}
+ .note-workspace-root .task-filters{width:100%;gap:4px;padding:4px}
+ .note-workspace-root .task-filters button{min-width:0;flex:1 1 0;padding:8px 6px;font-size:12px;white-space:nowrap}
+ .note-workspace-root .task-file-group>summary{display:grid;grid-template-columns:minmax(0,1fr) 20px 44px;gap:4px 8px;padding:8px!important}
+ .note-workspace-root .task-file-title{grid-column:1/-1;grid-row:1;width:100%;max-width:100%;font-size:14px;white-space:normal;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .note-workspace-root .task-file-count{grid-column:1;grid-row:2;font-size:12px}
+ .note-workspace-root .task-file-chevron{grid-column:2;grid-row:2}
+ .note-workspace-root .task-file-link{grid-column:3;grid-row:2}
+ .note-workspace-root .note-link{width:44px;max-width:44px;flex:0 0 44px;justify-content:center}
+ .note-workspace-root .note-link span{display:none}
+ .note-workspace-root .task-item{gap:4px}
+ .note-workspace-root .task-title-button{font-size:14px}
+ .note-workspace-root .task-create-button{font-size:13px;padding-inline:12px}
+ .note-workspace-root .page-footer{flex-direction:column;align-items:flex-start;gap:4px}
+ .note-workspace-root .stat-summary{grid-template-columns:minmax(0,1fr);gap:10px}
+ .note-workspace-root .stat-summary>div{padding:16px}
+ .note-workspace-root .week-chart{gap:2px}
+ .note-workspace-root .week-day{min-width:0;font-size:10px}
+ .note-workspace-root .week-bar{width:14px}
+ .note-workspace-root .week-value{font-size:9px}
+ .note-workspace-root .stats-columns>section{padding:16px}
+ .note-workspace-root .statistics-date-control{justify-content:flex-start;gap:4px}
+ .note-workspace-root .statistics-date-control input{min-width:0;max-width:132px}
+ .note-workspace-root .editor-actions{gap:6px}
+ .note-workspace-root .editor-actions button{padding-inline:12px}
+}
+@container todo-pane (max-width:260px){
+ .note-workspace-root .topbar h1,.note-workspace-host header>strong{font-size:16px}
+ .note-workspace-root .module-card{padding:12px;border-radius:18px}
+ .note-workspace-root .module-card .section-heading{align-items:flex-start;flex-direction:column}
+ .note-workspace-root .module-card .section-heading h2{font-size:16px}
+ .note-workspace-root .module-total strong{font-size:18px}
+ .note-workspace-root .module-total>span{font-size:11px}
+ .note-workspace-root .readonly-tasks .task-item{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:start;gap:0 4px}
+ .note-workspace-root .task-item>input{grid-column:1;grid-row:1}
+ .note-workspace-root .task-item>.task-copy{grid-column:2;grid-row:1}
+ .note-workspace-root .task-item>.note-link,.note-workspace-root .task-item>.manual-task-label{grid-column:2;grid-row:2;justify-self:end}
+ .note-workspace-root .statistics-date-control{flex-wrap:wrap}
+ .note-workspace-root .week-bar{width:10px}
+ .note-workspace-root .week-day{font-size:9px}
+ .note-workspace-root .week-value{font-size:8px}
+}
+
+@container todo-pane (max-width:360px){.note-workspace-root .week-month{display:none}.note-workspace-root .week-value{max-width:100%;overflow-wrap:anywhere;line-height:1.2}}
+/* Obsidian buttons default to nowrap; editable task titles must wrap inside the pane. */
+.note-workspace-root .task-title-button{white-space:normal;overflow-wrap:anywhere;word-break:normal}
+/* M011: source-labelled statistics, editable module tags and deadline planning. */
+.note-workspace-root .stat-summary [data-stat=duration]{grid-column:1/-1;background:var(--aqua)}
+.note-workspace-root .statistics-provenance{font-size:12px;color:var(--muted);margin:0 0 24px}
+.note-workspace-root .statistics-provenance summary{min-height:44px;cursor:pointer}
+.note-workspace-root .statistics-provenance p{line-height:1.8}
+.note-workspace-root .week-chart{align-items:stretch;height:160px}
+.note-workspace-root .week-day{height:100%;min-height:44px;justify-content:flex-end;min-width:0;padding-block:4px}
+.note-workspace-root .week-bar{flex:0 0 auto;min-height:0}
+.note-workspace-root .week-value,.note-workspace-root .week-date{flex:0 0 auto}
+.note-workspace-root .module-open{padding:4px 0;min-height:44px;max-width:100%;height:auto;border:0;border-radius:6px;background:none;box-shadow:none;color:var(--ink);font-size:15px;text-align:left;white-space:normal;overflow-wrap:anywhere}
+.note-workspace-root .hidden-module-list{font-size:12px;color:var(--muted);margin-top:8px}
+.note-workspace-root .hidden-module-list summary{cursor:pointer;min-height:44px}
+.note-workspace-root .hidden-module-list button{min-height:44px;padding:4px 8px;white-space:normal}
+.note-workspace-root .tag-preview,.note-workspace-root .task-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;min-width:0}
+.note-workspace-root .tag-preview-chip,.note-workspace-root .task-tags span{display:inline-block;max-width:100%;padding:3px 8px;border-radius:8px;background:var(--mint);color:#304a32;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.note-workspace-root .tag-preview-chip[data-tag-state=new]{background:var(--cream);color:#574714}
+.note-workspace-root .planning-fields{display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin-top:20px;padding-top:20px;border-top:1px solid var(--rule)}
+.note-workspace-root .task-editor-form input:not([type=checkbox]),.note-workspace-root .task-editor-form select{box-sizing:border-box;min-width:0;width:100%;height:44px;min-height:44px;font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid #bac2b3;border-radius:10px;padding:8px 10px;box-shadow:none}
+.note-workspace-root .task-editor-form input[readonly]{background:#eceee5;color:var(--muted)}
+.note-workspace-root .task-editor-form .reminder-enable{display:flex;align-items:center;gap:8px;min-height:44px;margin:0;color:var(--ink)}
+.note-workspace-root .task-editor-form input[type=checkbox]{appearance:auto;width:20px;height:20px;min-width:20px;margin:0;accent-color:var(--blue)}
+.note-workspace-root .reminder-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(70px,.65fr);gap:12px}
+.note-workspace-root .task-editor-form input:disabled,.note-workspace-root .task-editor-form select:disabled{opacity:.5}
+.note-workspace-root .deadline-clear{min-height:44px;height:auto;padding:4px 0;border:0;box-shadow:none;background:none;font-size:12px;color:var(--blue)}
+.note-workspace-root .module-view-tasks{min-height:44px;height:auto;padding:8px 14px;border:0;border-radius:999px;background:var(--mint);color:var(--ink);white-space:normal}
+.note-workspace-root .module-delete-confirm{padding:14px;margin-top:16px;border:1px solid #a34631;border-radius:14px;font-size:13px;color:#782e21}
+.note-workspace-root .module-delete-confirm[hidden]{display:none}
+.note-workspace-root .module-delete-confirm button{min-height:44px;height:auto;max-width:100%;white-space:normal;padding:8px 12px;margin-top:12px;border:0;border-radius:10px;color:#782e21;background:#f4ded8}
+.note-workspace-root .module-task-filter{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:13px}
+.note-workspace-root .module-task-filter span{min-width:0;overflow-wrap:anywhere}
+.note-workspace-root .module-task-filter button{min-height:44px;white-space:normal;color:var(--blue)}
+.note-workspace-root .task-item.deadline-warning .task-title-button{color:#b3261e!important}
+.note-workspace-root .task-item[data-deadline-state=overdue] .task-title-button{text-decoration:underline;text-underline-offset:4px}
+.task-deadline-tooltip{position:fixed;z-index:10000;padding:10px 14px;border-radius:10px;background:#1f241f;color:#faf9f4;font-family:"PingFang SC",system-ui,sans-serif;font-size:13px;line-height:1.7;white-space:pre-line;overflow-wrap:anywhere;pointer-events:none;box-sizing:border-box;box-shadow:0 8px 30px #1f241f24}
+@container todo-pane (max-width:360px){.note-workspace-root .module-open{font-size:14px}.note-workspace-root .reminder-fields{gap:8px}.note-workspace-root .week-day{height:100%;min-height:44px}}
+
+/* M012: time-only descriptions never occupy a task row; explicit clickable AM/PM. */
+.note-workspace-root .task-time-description[hidden]{display:none!important}
+.note-workspace-root .deadline-time-fields{display:grid;grid-template-columns:minmax(92px,1.3fr) repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.note-workspace-root .deadline-time-fields label{min-width:0;margin:0}
+.note-workspace-root .deadline-time-fields select{cursor:pointer;appearance:auto}
+@media(max-width:380px){.note-workspace-root.task-editor-dialog{padding:18px}.note-workspace-root .deadline-time-fields{gap:8px}}

@@ -1,0 +1,40 @@
+.note-workspace-host{--paper:var(--nt-paper);--ink:var(--nt-ink);--muted:#65675f;--rule:var(--nt-line);--blue:var(--nt-blue);--ease:var(--nt-ease);--nt-paper:#f8f4ec;--nt-ink:#161a1b;--nt-blue:#0b3b50;--nt-line:#c9c7c2;--nt-ease:cubic-bezier(.23,1,.32,1);background:var(--nt-paper)!important;color:var(--nt-ink)!important;padding:16px!important;font-size:14px;line-height:1.6}
+.note-workspace-host header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.note-workspace-host button{min-height:44px;background:none;box-shadow:none;color:inherit;border:0;cursor:pointer}
+.note-workspace-host button:focus-visible,.note-workspace-host summary:focus-visible{outline:2px solid #dc510e;outline-offset:2px}
+.note-workspace-host .readonly-notice{font-size:11px;color:#65675f;margin:8px 0 16px}
+.note-workspace-host button:disabled{opacity:.35;cursor:not-allowed}
+.note-workspace-host .readonly-disclosure{display:flex;align-items:center;gap:8px}
+.note-workspace-host .readonly-toggle{padding:0;width:44px;display:grid;place-items:center}
+.note-workspace-host .readonly-tasks{list-style:none;padding:0;margin:0}
+.note-workspace-host .readonly-tasks li{display:flex;align-items:start;gap:12px;margin-block:14px;overflow-wrap:anywhere}
+.note-workspace-host .readonly-tasks small{display:block;font-size:11px;color:#65675f}
+.note-workspace-host .readonly-empty{padding:72px 8px;text-align:center;color:#65675f}
+.note-workspace-host details{margin-top:24px;font-size:12px}
+.note-workspace-host summary{min-height:44px;cursor:pointer}
+.note-workspace-host pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#f0ece4;padding:12px}
+.note-workspace-host .readonly-stats strong{display:block;font-size:24px;font-weight:500}
+.note-workspace-host [hidden]{display:none!important}
+.note-workspace-host header>strong{color:var(--nt-ink)!important;font-weight:500}
+.note-workspace-host .readonly-tasks li{align-items:center;gap:8px}
+.note-workspace-host .readonly-tasks input{flex:0 0 auto;margin:0}
+.note-workspace-host .readonly-task-copy{flex:1;min-width:0}
+.note-workspace-host .readonly-task-copy small:empty{display:none}
+.note-workspace-host .readonly-note-link{display:inline-flex;align-items:center;gap:6px;max-width:35%;min-height:44px;color:var(--nt-blue);font-size:12px;flex:0 0 auto;text-decoration:none}
+.note-workspace-host .readonly-note-link span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:underline;text-underline-offset:4px}
+.note-workspace-host .readonly-note-link svg{flex-shrink:0}
+.note-workspace-host .readonly-note-link:focus-visible{outline:2px solid #dc510e;outline-offset:2px}
+.note-workspace-host .statistics-view{width:100%;padding:8px 0 24px;box-sizing:border-box}
+.note-workspace-host .statistics-view *{box-sizing:border-box}
+.note-workspace-host .statistics-view h2,.note-workspace-host .statistics-view p{margin-block-start:0}
+.note-workspace-host .readonly-tasks input[type=checkbox]{appearance:auto!important;width:20px;height:20px;accent-color:var(--nt-blue);background:transparent}
+.note-workspace-host .readonly-tasks input[type=checkbox]::before,.note-workspace-host .readonly-tasks input[type=checkbox]::after{display:none}
+.note-workspace-host .task-item.done .readonly-task-copy>span{text-decoration:line-through;color:var(--muted)}
+.note-workspace-host .storage-error{border:1px solid #b85a31;padding:12px;font-size:12px;color:#7c361b}
+.note-workspace-host .storage-error button{color:inherit;text-decoration:underline}
+.note-workspace-import-modal{background:#f8f4ec!important;color:#161a1b!important;max-width:520px}
+.note-workspace-import-modal .modal-title{color:#161a1b!important}
+.note-workspace-import-modal p{overflow-wrap:anywhere}
+body .workspace-leaf .workspace-leaf-content[data-type="note-trajectory-readonly"] .view-content.note-workspace-host{background:#f8f4ec!important;color:#161a1b!important}
+
+.note-workspace-host .home-modules{padding-top:24px;padding-bottom:8px;border-bottom:1px solid var(--rule)}

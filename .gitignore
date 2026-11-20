@@ -1,0 +1,8 @@
+**/node_modules/
+**/.test-build/
+**/review/
+**/artifacts/
+**/.DS_Store
+**/data.json
+**/*.local.*
+**/.env*

@@ -1,0 +1,23 @@
+:where(.tasks-section,.note-workspace-host) .task-filters{display:flex;gap:20px;align-items:center;margin:8px 0 16px;border-bottom:1px solid var(--rule,#c9c7c2)}
+:where(.tasks-section,.note-workspace-host) .task-filters button{min-height:44px;font:inherit;font-size:13px;padding:8px 0;color:var(--muted,#65675f);border-bottom:2px solid transparent;border-radius:0;background:none;box-shadow:none}
+:where(.tasks-section,.note-workspace-host) .task-filters button[aria-pressed=true]{color:var(--blue,#0b3b50);border-bottom-color:currentColor}
+:where(.tasks-section,.note-workspace-host) .task-copy small:empty{display:none}
+:where(.tasks-section,.note-workspace-host) .source-unavailable{font-size:12px;color:var(--muted,#65675f)}
+#app>.storage-error,.note-workspace-host .storage-error{width:min(1104px,calc(100% - 48px));margin:16px auto;padding:12px 16px;border:1px solid #b85a31;color:#7c361b;font-size:13px}
+.nt-import-dialog{max-width:min(520px,calc(100% - 40px));padding:28px;border:1px solid #c9c7c2;border-radius:12px;background:#f8f4ec;color:#161a1b;font:inherit;box-shadow:0 16px 60px #161a1b24}
+.nt-import-dialog::backdrop{background:#161a1b55}
+.nt-import-dialog h2{font-size:20px;font-weight:500;margin-bottom:16px}
+.nt-import-dialog p{font-size:14px;line-height:1.8;margin:12px 0;overflow-wrap:anywhere}
+.nt-import-dialog .action-row{justify-content:flex-end;margin-top:24px}
+:where(.tasks-section,.note-workspace-host) .readonly-tasks>li.task-file-container{display:block;margin:0;padding:0;list-style:none}
+:where(.tasks-section,.note-workspace-host) details.task-file-group{margin:8px 0 12px;min-width:0;font-size:inherit;border-bottom:1px solid var(--rule,#c9c7c2)}
+:where(.tasks-section,.note-workspace-host) .task-file-group>summary{display:flex;align-items:center;gap:8px;min-height:52px;padding:4px 0;cursor:pointer;list-style:none}
+:where(.tasks-section,.note-workspace-host) .task-file-group>summary::-webkit-details-marker{display:none}
+:where(.tasks-section,.note-workspace-host) .task-file-title{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:15px}
+:where(.tasks-section,.note-workspace-host) .task-file-count{font-size:12px;color:var(--muted,#65675f);white-space:nowrap}
+:where(.tasks-section,.note-workspace-host) .task-file-chevron{flex-shrink:0;transform:rotate(0deg)}
+:where(.tasks-section,.note-workspace-host) .task-file-group[open]>summary .task-file-chevron{transform:rotate(180deg)}
+:where(.tasks-section,.note-workspace-host) .task-file-link,:where(.tasks-section,.note-workspace-host) .compact-source-link{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;min-height:44px;max-width:none;color:var(--blue,#0b3b50)}
+:where(.tasks-section,.note-workspace-host) .task-file-children{padding-left:12px;margin:0 0 12px}
+:where(.tasks-section,.note-workspace-host) .task-file-group:not([open])>.task-file-children{display:none}
+:where(.tasks-section,.note-workspace-host) .task-file-group summary:focus-visible{outline:2px solid #dc510e;outline-offset:3px}
