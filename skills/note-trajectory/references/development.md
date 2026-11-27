@@ -28,7 +28,7 @@ npm ci --ignore-scripts
 npm run check
 ```
 
-`check` 执行严格 TypeScript、55 项行为测试和 HTML/插件双构建。浏览器检查使用已安装 Chrome，可设置 CHROME_PATH：
+`check` 执行严格 TypeScript、78 项行为测试和 HTML/插件双构建。浏览器检查使用已安装 Chrome，可设置 CHROME_PATH：
 
 ```sh
 npm run test:ui
@@ -42,3 +42,9 @@ npm run test:planning-ui
 验收重点：大文件许可、连续编辑身份去重、删除防重新导入、失败重试、源链接、统计独立算法、午夜/重叠/不足一分钟、上午/下午转换、DDL 原精度、自动提醒状态及真实宿主隐藏辅助描述。原生 select 使用自动化工具的标准选项驱动；单独检查焦点顺序，避免把操作系统菜单按键假设当成功能缺陷。
 
 浏览器/模拟测试不代表整应用强制退出或断电验证。真实库安装后另查数据、样式及来源跳转，恢复用户原有面板尺寸。目录分类别名位于 src/core/model.ts 的 DEFAULT_CONFIG；更改需重建，不宣称存在尚未实现的配置界面。
+
+来源衔接专项：`node scripts/source-sync-ui-check.mjs`。验证来源勾选、幂等完成、原文逐行删除、失败保留及重载；真实宿主只用当前用户授权的合成笔记测试并清理。旧 tombstone 不能自动批量回写。
+
+分组专项：`node scripts/task-groups-ui-check.mjs`。Workspace v6兼容v5，分组解散保留任务；新文件超过5项导入许可与目录超过3项分组许可分开验证。
+
+0.7.0现已移除时长；当前为Workspace v7/State v3。新增node scripts/completion-ui-check.mjs验证数量图、迁移和完成后的持久化，不沿用旧时长验收。

@@ -21,3 +21,38 @@
 :where(.tasks-section,.note-workspace-host) .task-file-children{padding-left:12px;margin:0 0 12px}
 :where(.tasks-section,.note-workspace-host) .task-file-group:not([open])>.task-file-children{display:none}
 :where(.tasks-section,.note-workspace-host) .task-file-group summary:focus-visible{outline:2px solid #dc510e;outline-offset:3px}
+
+/* M018: only the new grouping controls; reuse existing task card geometry. */
+.note-workspace-root .task-group-toolbar{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;min-width:0}
+.note-workspace-root .task-group-toolbar button{max-width:100%;min-height:44px;white-space:normal;overflow-wrap:anywhere}
+.note-workspace-root .task-group-field{margin:16px 0;min-width:0}
+.note-workspace-root .task-group-field label{display:block;margin:8px 0}
+.note-workspace-root .task-group-field select,.note-workspace-root .task-group-field input{width:100%;min-height:44px;min-width:0;max-width:100%;box-sizing:border-box}
+.note-workspace-root .task-group-name{height:auto;min-height:44px;padding:4px 0;border:0;background:transparent;box-shadow:none;color:inherit;text-align:left;font:inherit;white-space:normal;overflow-wrap:anywhere}
+.note-workspace-root #task-new-group-field[hidden]{display:none}
+
+/* M022: explicit time horizons with touch-friendly, non-gesture-only navigation. */
+.note-workspace-root .task-view-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:8px 0 12px;padding:4px;border:1px solid var(--rule,#c9c7c2);border-radius:14px;touch-action:pan-y;background:color-mix(in srgb,var(--paper,#faf9f4) 82%,var(--sage,#e5edce))}
+.note-workspace-root .task-view-target{position:relative;min-width:0}
+.note-workspace-root .task-view-tabs button{width:100%;min-width:0;min-height:44px;padding:6px;border:0;border-radius:10px;background:transparent;color:var(--muted,#65675f);font:inherit;font-size:13px;box-shadow:none;white-space:nowrap}
+.note-workspace-root .task-view-tabs button[aria-current=page]{background:var(--ink,#1f241f);color:var(--paper,#faf9f4)}
+.note-workspace-root .task-horizon-drop{position:absolute;inset:-3px 0 3px;z-index:2;display:block;height:44px;min-height:44px;max-height:44px;margin:0;padding:0;overflow:hidden;border:2px dashed transparent;border-radius:10px;background:transparent;list-style:none;pointer-events:none}
+.note-workspace-root .is-task-dragging .task-horizon-drop{border-color:var(--blue,#0b3b50);background:color-mix(in srgb,var(--mint,#dceceb) 88%,transparent);pointer-events:auto}
+.note-workspace-root .task-horizon-drop>.task-item{display:none!important}
+.note-workspace-root .is-task-dragging .task-view-target:has(.task-horizon-drop)::after{content:'放到这里';position:absolute;inset:0;z-index:3;display:grid;place-items:center;color:var(--blue,#0b3b50);font-size:11px;font-weight:600;pointer-events:none}
+.note-workspace-root .task-create-surface{touch-action:pan-y}
+@media (prefers-reduced-motion:reduce){.note-workspace-root .task-view-tabs button{transition:none}}
+.note-workspace-root .module-board-row{display:block!important;padding:0!important;border:0!important}
+.note-workspace-root .module-board{display:flex;gap:14px;align-items:flex-start;max-width:100%;padding:2px 2px 12px;overflow-x:auto;overscroll-behavior-inline:contain;scroll-snap-type:x proximity;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.note-workspace-root .module-lane{flex:0 0 clamp(240px,82cqi,320px);min-width:0;padding:12px;border:1px solid var(--rule,#c9c7c2);border-radius:16px;background:color-mix(in srgb,var(--paper,#faf9f4) 92%,var(--mint,#dceceb));scroll-snap-align:start}
+.note-workspace-root .module-lane h3{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 8px;font-size:14px;font-weight:500}
+.note-workspace-root .module-lane h3 button{min-height:44px;padding:4px 0;border:0;background:none;box-shadow:none;color:inherit;text-align:left}
+.note-workspace-root .module-drop-list{min-height:54px;margin:0;padding:0;list-style:none}
+.note-workspace-root.is-task-dragging .module-board{scroll-snap-type:none;scroll-behavior:auto}
+.note-workspace-root .module-drag-ghost{opacity:.35}.note-workspace-root .module-drag-chosen{outline:2px solid var(--blue,#0b3b50);outline-offset:2px}
+.note-workspace-root .task-drag-handle{display:none;flex:0 0 auto;align-self:stretch;min-width:42px;min-height:44px;padding:0 8px;border:0;background:color-mix(in srgb,var(--sage,#e5edce) 48%,transparent);border-radius:10px;color:var(--muted,#65675f);box-shadow:none;cursor:grab;touch-action:none;letter-spacing:-3px}
+.note-workspace-root .task-drag-handle{display:inline-flex;align-items:center;justify-content:center}
+.note-workspace-root .task-drag-handle:active{cursor:grabbing}
+.note-workspace-root .module-task-filter{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:8px 12px;border-radius:12px;background:color-mix(in srgb,var(--sage,#e5edce) 65%,transparent);font-size:13px}
+.note-workspace-root .module-task-filter button{min-height:40px;padding:4px 10px}
+.note-workspace-root .module-create{min-height:44px;padding:4px 8px;border:0;background:none;color:var(--blue,#0b3b50);box-shadow:none}

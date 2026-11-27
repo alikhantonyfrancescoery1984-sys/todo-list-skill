@@ -36,21 +36,10 @@ test('manual create retries after persistence failure cannot create duplicates a
  x.fail(true);await assert.rejects(x.c.removeTask('stable-draft'));assert.equal(x.c.tasks.length,0);x.fail(false);await x.c.removeTask('stable-draft');assert.equal(x.saved?.tasks[0]?.id,'stable-draft');assert(x.saved?.tasks[0]?.deletedAt);
 });
 test('v3 upgrade preserves existing data and validates edit/delete metadata',async()=>{
- const x=setup();await x.c.open(x.file);const raw=x.c.snapshot(),old={...raw,schemaVersion:3};const upgraded=validateWorkspace(old);assert.equal(upgraded.schemaVersion,5);assert.deepEqual(upgraded.tasks,raw.tasks);
+ const x=setup();await x.c.open(x.file);const raw=x.c.snapshot(),old={...raw,schemaVersion:3};old.state={...old.state,schemaVersion:2} as unknown as typeof old.state;const upgraded=validateWorkspace(old);assert.equal(upgraded.schemaVersion,7);assert.deepEqual(upgraded.tasks,raw.tasks);
  const bad=structuredClone(raw);bad.tasks[0]!.deletedAt='invalid';assert.throws(()=>validateWorkspace(bad));
  const badLabel=structuredClone(raw);badLabel.tasks[0]!.label='';assert.throws(()=>validateWorkspace(badLabel));
 });
-test('module totals match independently computed recorded seconds, longest directory rules, midnight and overlap',()=>{
- const x=setup(),s=x.c.state;
- s.notes=[{id:'ai',path:'AI learning/a.md',text:'',version:1},{id:'en',path:'English/b.md',text:'',version:1},{id:'r',path:'lessons/research/c.md',text:'',version:1}];
- const record=(id:string,noteId:string,start:string,end:string)=>({id,noteId,start,end,estimated:true,reason:'pause' as const});
- s.sessions=[record('ai','ai','2026-11-21T09:00:00+08:00','2026-11-21T09:00:20+08:00'),record('en','en','2026-11-21T09:00:10+08:00','2026-11-21T09:00:50+08:00'),record('research','r','2026-11-20T23:59:50+08:00','2026-11-21T00:00:10+08:00')];
- s.completions=[{taskId:'one',noteId:'en',at},{taskId:'one',noteId:'en',at}];
- const stats=dailyStats(s,'2026-11-21');assert.equal(stats.activeMinutes*60,60);
- const seconds=Object.fromEntries(stats.modules.map(m=>[m.name,m.minutes*60]));assert.deepEqual(seconds,{english:30,AI:20,research:10});assert.equal(stats.completed,1);
- const html=renderModuleDistribution(s,'2026-11-21');for(const [name,seconds] of Object.entries({english:30,AI:20,research:10}))assert(new RegExp(`data-module="${name}"[^>]*data-seconds="${seconds}"`).test(html));
- const widths=[...html.matchAll(/style="width:([\d.]+)%"/g)].map(m=>+m[1]!);assert(Math.abs(widths.reduce((a,b)=>a+b,0)-100)<1e-9);
- const full=renderStatistics(s,'2026-11-21',{title:n=>n,time:a=>a});assert(!full.includes('模块分布'));assert(!/估算|预估|大约/.test(html+full));assert(full.includes('已记录时长'));assert(full.includes('笔记活动'));
- assert.equal(moduleForPath('lessons/research/deep/n.md'),'research');assert.equal(moduleForPath('unmapped/a.md'),'processing');
- s.notes[0]!.path='English/moved.md';assert(Math.abs(dailyStats(s,'2026-11-21').modules.find(m=>m.name==='english')!.minutes*60-50)<1e-9);
+test('module completion totals match unique history and actual directory mapping',()=>{
+ const x=setup(),s=x.c.state;s.notes=[{id:'ai',path:'AI learning/a.md',text:'',version:1},{id:'en',path:'English/b.md',text:'',version:1}];s.completions=[{taskId:'one',noteId:'ai',at},{taskId:'two',noteId:'en',at},{taskId:'two',noteId:'en',at}];const stats=dailyStats(s,'2026-11-21');assert.equal(stats.completed,2);assert.deepEqual(Object.fromEntries(stats.modules.map(m=>[m.name,m.completed])),{AI:1,english:1});const html=renderModuleDistribution(s,'2026-11-21');assert.equal((html.match(/width:50%/g)||[]).length,2);s.notes[0]!.path='English/moved.md';assert.equal(dailyStats(s,'2026-11-21').modules[0]!.completed,2);assert(!renderStatistics(s,'2026-11-21',{title:n=>n,time:a=>a}).includes('模块分布'));assert.equal(moduleForPath('lessons/research/a.md'),'research');
 });

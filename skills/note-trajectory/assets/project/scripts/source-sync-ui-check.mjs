@@ -1,0 +1,18 @@
+import {chromium} from 'playwright-core';import {existsSync} from 'node:fs';import {mkdir,writeFile} from 'node:fs/promises';import {pathToFileURL} from 'node:url';import {resolve} from 'node:path';import assert from 'node:assert/strict';
+const executablePath=process.env.CHROME_PATH||['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome','/usr/bin/google-chrome','/usr/bin/chromium'].find(existsSync);
+const browser=await chromium.launch({executablePath,headless:true}),checks=[],errors=[],key='note-trajectory-workspace-preview-v2';
+const mark=x=>{checks.push(x);console.log('PASS:',x)};
+try{
+ const page=await browser.newPage({viewport:{width:1000,height:900}});page.on('pageerror',e=>errors.push(e.message));await page.addLocatorHandler(page.locator('[data-group-choice=skip]'),async b=>b.click());await page.goto(pathToFileURL(resolve('dist/index.html')).href);await page.locator('#tasks-toggle').click();
+ const id=await page.locator('[data-complete]').first().getAttribute('data-complete');await page.locator(`[data-task-item="${id}"] [data-action=source-note]`).click();
+ const before=await page.locator('#note-editor').inputValue();const next=before.replace(/\[ \]/,'[x]');assert.notEqual(before,next);await page.locator('#note-editor').fill(next);await page.locator('[data-action=save]').click();
+ await page.waitForFunction(({k,id})=>JSON.parse(localStorage.getItem(k)).workspace.tasks.find(t=>t.id===id).done,{k:key,id});
+ assert.equal(await page.locator(`[data-task-item="${id}"]`).count(),0);await page.locator('[data-filter=done]').click();assert(await page.locator(`[data-complete="${id}"]`).isChecked());mark('source check moves the same task from pending to checked completed work');
+ await page.locator('[data-action=recheck]').click();await page.waitForTimeout(100);await page.reload();await page.locator('#tasks-toggle').click();await page.locator('[data-filter=done]').click();assert(await page.locator(`[data-complete="${id}"]`).isChecked());
+ let data=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);assert.equal(data.workspace.state.completions.filter(c=>c.taskId===id).length,1);mark('source recheck and reload retain completion without duplicate history');
+ await page.locator('[data-filter=pending]').click();const removeId=await page.locator('[data-complete]').first().getAttribute('data-complete');await page.locator(`[data-task-item="${removeId}"] [data-action=source-note]`).click();
+ const source=await page.locator('#note-editor').inputValue();data=await page.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);const task=data.workspace.tasks.find(t=>t.id===removeId);assert(source.includes(task.text));const expected=source.split('\n');expected.splice(task.line,1);
+ await page.locator(`[data-task-item="${removeId}"] .task-title-button`).click();await page.locator('[data-editor=delete]').click();await page.waitForSelector('.task-editor-dialog',{state:'detached'});assert.equal(await page.locator('#note-editor').inputValue(),expected.join('\n'));mark('list deletion removes exactly the source checkbox line and preserves all other text');
+ await page.locator('[data-action=recheck]').click();await page.waitForTimeout(100);await page.reload();await page.locator('#tasks-toggle').click();assert.equal(await page.locator(`[data-task-item="${removeId}"]`).count(),0);mark('source deletion remains consistent after recheck and restart');
+ assert.deepEqual(errors,[]);await mkdir('review/m017',{recursive:true});await writeFile('review/m017/source-sync-ui-check.json',JSON.stringify({checks,errors},null,2));
+}finally{await browser.close()}

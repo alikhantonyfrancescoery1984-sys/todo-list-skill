@@ -1,4 +1,4 @@
-import {observeNote} from '../core/usage';
+import {observeNote} from '../core/observations';
 import { DEFAULT_CONFIG, fingerprint, id, type State, type Task, type Config, type Result, type Operation } from '../core/model';
 import { extractTasks, classify } from '../core/tasks';
 import { addCard, changeCard, parseBoard } from '../core/board';

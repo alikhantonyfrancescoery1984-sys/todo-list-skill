@@ -77,7 +77,6 @@ input[type=checkbox]:disabled{opacity:.35;cursor:not-allowed}
 .board-preview pre{font-family:ui-monospace,monospace;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;padding:24px;background:#f0ece4;border-radius:8px}
 @media(hover:hover) and (pointer:fine){.quiet-button:hover{background:#ede8dd}
 .stats-entry:hover{background:none;color:var(--orange)}
-.interval:hover .interval-line{background:var(--orange)}
 .week-day:hover .week-bar{background:var(--orange)}
 .icon-button:hover{background:#ede8dd}
 }
@@ -86,7 +85,6 @@ input[type=checkbox]:disabled{opacity:.35;cursor:not-allowed}
 .section-heading{flex-wrap:wrap}
 .identity{gap:16px}
 .stat-summary{gap:16px}
-.stat-summary strong.duration{font-size:22px}
 }
 @media(max-width:640px){:root{}
 .topbar,.workspace-view,.statistics-view,.page-footer,.workbench{padding-inline:24px}
@@ -106,7 +104,6 @@ h1{font-size:17px}
 .statistics-view{padding-top:8px}
 .statistics-view .stat-summary{grid-template-columns:1fr 1fr;gap:28px;padding-bottom:32px}
 .stat-summary strong{font-size:30px}
-.stat-summary strong.duration{font-size:23px;margin-top:16px}
 .date-control{gap:0}
 .date-control .icon-button{width:36px}
 .date-control input{max-width:128px;font-size:12px}
@@ -116,7 +113,6 @@ h1{font-size:17px}
 .stats-columns{grid-template-columns:1fr;gap:32px;margin-top:32px}
 .week-chart{gap:4px}
 .week-day{min-width:28px}
-.details-section{margin-top:36px}
 .workbench-grid{grid-template-columns:1fr;gap:32px}
 .workbench-title{display:block}
 .workbench-title>span{display:block;margin-top:8px}

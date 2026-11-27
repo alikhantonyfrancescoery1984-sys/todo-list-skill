@@ -1,6 +1,6 @@
 {
   "name": "note-trajectory",
-  "version": "0.6.1",
+  "version": "0.7.13",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,14 +11,21 @@
     "test:ui": "node scripts/ui-check.mjs",
     "test:tasks-ui": "node scripts/task-ui-check.mjs",
     "test:container-ui": "node scripts/container-ui-check.mjs",
-    "test:planning-ui": "node scripts/planning-ui-check.mjs"
+    "test:planning-ui": "node scripts/planning-ui-check.mjs",
+    "test:m022-ui": "node scripts/m022-ui-check.mjs",
+    "release:prepare": "node scripts/release.mjs",
+    "release:publish": "node scripts/release.mjs --publish"
   },
   "devDependencies": {
     "@types/node": "26.6.6",
+    "@types/sortablejs": "^1.15.9",
     "esbuild": "0.28.2",
     "obsidian": "1.14.4",
     "playwright-core": "1.65.1",
     "typescript": "7.0.2"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "sortablejs": "^1.15.6"
+  }
 }

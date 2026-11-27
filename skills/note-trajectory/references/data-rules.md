@@ -1,22 +1,9 @@
-# Data rules
+# 当前数据规则 · 0.7.0
 
-- WorkspaceData v5 wraps State v2, accepted tasks, per-file consent and source tombstones. State.observations stores unique noteId/date pairs; State.sessions contains independent recorded time intervals. No raw event nodes remain.
-- validateWorkspace accepts previous Workspace v2 / State v1 and Workspace v3/v4 / State v2 through a validated migration: aggregate user activities by Shanghai date/note, discard raw activities, preserve tasks, notes, sessions, receipts, completions, operations, successfulRuns, decisions and tombstones. Reject unknown/corrupt data without writing an empty default. Snapshot note.text is empty.
-- At most five unfinished source tasks auto-import. More than five with new task IDs requires file consent. Never persist candidates before approval. Skip is remembered with explicit retry; allow covers later additions. Previously accepted work is not deleted by refusal.
-- Ordinary one-to-one source-line revisions preserve task IDs; identical snapshots reuse candidates, and an empty body with its checkbox retains draft identity. Actual insertion/deletion remains distinct. Prefer explicit block IDs and treat ambiguous rewrites conservatively.
-- Completion belongs to the plugin ledger, cannot be reset by unchecked source text, and preserves completed history. Removing source lines/files never erases accepted tasks. Rename keeps identity.
-- Serialize saves, show failures and retry. Restore no open session across downtime. Upgrade only program files, preserving data.json and its storage ID.
-- Statistical usage excludes external/index refreshes. Note switches, blur, >90-second idle and interruption close activity sessions; idle/downtime ends at last confirmed interaction. Daily observations have no node IDs, event types, rounds or layout semantics.
-- Statistics use actual receipts/completions and recorded sessions; unique tasks/day, Shanghai midnight splitting and overlap removal remain. Never divide note time into task time. Module labels follow current source path aliases in DEFAULT_CONFIG.columnMap; use actual nonzero total for shares and zero width when time is absent.
-- More than five accepted tasks per file uses native collapsed details with source links and preserved view expansion. Only home displays module distribution; full statistics keeps summary/week/details; activity details open source notes directly. Removed graph/daily-axis/interval-plot elements stay absent.
-- No current Kanban writes or scheduling run. Preserve unrelated jobs and source files.
-
-- M009 local CRUD: origin=manual uses a virtual note, never a vault file. Imported task label is separate from source text. deletedAt hides a task while retaining its source ID and history, suppressing re-import on metadata/restart. Undo retains original status. Collection must consult all stored task identities, including deleted ones; public tasks returns active entries only.
-- Every new form has a stable draft ID; retry after a failed save reuses it and creates one receipt. Preserve input and expose errors. Validate optional label/origin/deletedAt metadata and migrate old stores to v5 without changing accepted tasks.
-- Verify module seconds/completions and original percentages against an independent millisecond/folder oracle. UI uses recorded duration, with observed coverage explained. Keep deprecated interval metadata for compatibility without presenting it as exact total work time.
-
-- v5 adds manualModules/hiddenModules and task moduleIds/dueAt/reminder. Match manual tags by normalized names/aliases; first tag is statistics primary, any tag is membership. Keep the reserved manual-inbox ID unique. New tag previews do not create state until save. Module rename preserves ID/old aliases and cannot collide with source labels. Source names are read-only. Module removal soft-deletes all associated manual tasks and hides source classifications; preserve source tasks/files and historical events.
-- Cumulative tasks excludes tombstones and includes done; dated additions are receipt task IDs/day, independent of current inventory. Daily completions are unique completed events/day. Runtime analytics must pass complete tasks/module context because persisted taskRegistry is empty. Zero-duration active task/manual module rows can exist; never manufacture minutes. Hidden shares remain based on the whole day.
-- Shanghai date/AM-PM/hour/minute controls convert to timezone-bearing dueAt. Optional reminder uses nonnegative days/hours, threshold = due minus lead. Null due clears lead; omitted metadata retains it; source refresh does not overwrite it. No system notification during downtime. Every second repaint only warning classes, plus focus/visibility/reload recovery. Completed tasks never remain red. Dated pending work renders flat first globally ordered; ordinary grouped work follows with no duplicates. Multiline tooltip includes absolute deadline and reminder times.
-
-- M012 removes the edit-name prefix completely. Undated tasks have no hint; dated tasks have time-only tooltips and explicitly hidden description spans in native Obsidian. AM/PM uses a native clickable select; midnight/noon must roundtrip to 00/12. Preserve full timestamp precision when visible minute fields are unchanged.
+- Workspace v7 / State v3；旧v2–v6迁移保留任务/组/模块/许可/收录/完成事件，移除旧sessions。升级前备份个人数据，不分发旧状态。
+- 累计任务：当前未删除条目，包含完成与待办；当日新增：首次创建/收录taskId按上海日期去重；当日完成：completions按上海日期/taskId去重。
+- 同任务当天重复完成只计一次，不同日期可各计一次；删除/重开不抹除已有完成历史。没有历史数据的天数显示0。
+- 近七天包含所选日和前6日；模块名称按原目录映射或手动主标签，条形为当日模块完成数/当日全部完成数。隐藏模块不改总数；多标签只按第一个主标签记一次。
+- 无时长采集器、会话区间、时长字段和用时图表；DDL时间与提醒判断独立保留。
+- 手动/来源任务身份、来源勾选同步、删除唯一定位、分组解散保留及导入询问规则保持。
+- 只用合成数据测试，不能以演示数据覆盖个人data.json。

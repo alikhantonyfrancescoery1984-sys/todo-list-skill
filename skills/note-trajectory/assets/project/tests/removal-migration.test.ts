@@ -22,14 +22,14 @@ function legacy(){return {
  tasks:[{id:'t',noteId:'a',text:'Synthetic complete task',line:1,done:true,ambiguous:false,collectedAt:'2026-11-20T09:00:00+08:00',completedAt:'2026-11-20T09:01:00+08:00'}],
  decisions:{a:'allow',b:'skip'},deletedNotes:['b']};}
 
-test('upgrade discards old event nodes but preserves task identity, completion, consent, deletion and timing',()=>{
+test('upgrade discards old event nodes but preserves task identity, completion, consent, deletion while discarding timing',()=>{
  const old=legacy(),before=structuredClone(old),next=validateWorkspace(old);
- assert.equal(next.schemaVersion,5);assert.equal(next.state.schemaVersion,2);assert(!('activities' in next.state));
+ assert.equal(next.schemaVersion,7);assert.equal(next.state.schemaVersion,3);assert(!('activities' in next.state));
  assert.deepEqual(next.state.observations,[{noteId:'a',date:'2026-11-20'},{noteId:'a',date:'2026-11-21'}]);
  for(const key of ['tasks','decisions','deletedNotes'] as const)assert.deepEqual(next[key],old[key]);
- for(const key of ['notes','sessions','receipts','completions','operations','successfulRuns','taskRegistry'] as const)assert.deepEqual(next.state[key],old.state[key]);
+ for(const key of ['notes','receipts','completions','operations','successfulRuns','taskRegistry'] as const)assert.deepEqual(next.state[key],old.state[key]);
  assert.deepEqual(old,before,'migration must not mutate caller or backup');assert.deepEqual(validateWorkspace(next),next);
- const day=dailyStats(next.state,'2026-11-20');assert.equal(day.activeMinutes,1);assert.equal(day.notes,1);assert.equal(day.completed,1);assert.equal(day.collected,1);assert.equal(day.modules[0]?.name,'AI');
+ const day=dailyStats(next.state,'2026-11-20');assert(!('sessions' in next.state));assert.equal(day.notes,1);assert.equal(day.completed,1);assert.equal(day.collected,1);assert.equal(day.modules[0]?.name,'AI');
  assert.equal(dailyStats(next.state,'2026-11-21').notes,1);
 });
 test('migrated state survives save/reload and a still-unchecked source never resurrects completed tasks',async()=>{
@@ -50,9 +50,9 @@ test('malformed old and new statistical data reject without erasing the source s
 });
 test('only home owns module distribution, including empty and renamed directories',()=>{
  const s=validateWorkspace(legacy()).state,day='2026-11-20',context={title:(id:string)=>id,time:(at:string)=>at};
- const home=renderModuleDistribution(s,day),full=renderStatistics(s,day,context);assert(!full.includes('模块分布'));assert(home.includes('AI'));assert(home.includes('1 分钟'));assert(home.includes('1 项完成'));
+ const home=renderModuleDistribution(s,day),full=renderStatistics(s,day,context);assert(!full.includes('模块分布'));assert(home.includes('AI'));assert(!home.includes('分钟'));assert(home.includes('1 项完成'));
  s.notes[0]!.path='English/Alpha.md';assert(renderModuleDistribution(s,day).includes('english'));
- s.sessions=[];s.completions=[];assert(renderModuleDistribution(s,day).includes('暂无模块记录'));
+ s.completions=[];assert(!renderModuleDistribution(s,day).includes('<strong>0 项完成</strong>'));
 });
 test('production source contains no graph implementation, selectors, actions or imports',()=>{
  for(const f of ['src/core/trajectory.ts','src/core/activity.ts','src/ui/trajectory/canvas.ts','src/adapters/obsidian/readonly.ts','scripts/trajectory-check.mjs','tests/trajectory.test.ts'])assert(!existsSync(f),f+' must be removed');

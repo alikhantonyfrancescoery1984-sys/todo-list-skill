@@ -4,7 +4,7 @@ The supplied taste references guide the actual workspace UI: milk-white #FAF9F4,
 
 Home shows a rounded module card, followed by the task disclosure with a permanent label and add control. The module card has actual recorded duration, per-module duration/completion count, proportional bars and a native details explanation of coverage. All task actions remain discoverable when the list is collapsed. Daily statistics omits modules and retains summary values, seven-day chart, date controls and a scrollable details table.
 
-Clicking task-area blank space or add opens the shared task form. Clicking task title edits the local display name or deletes the task; checkbox and source link are independent. Cancel/Escape closes the editor and restores focus. Deletion offers undo. New drafts have stable identity during save retry. Preserve file folding and expansion across rerenders; source links never toggle summaries. Remove the noisy source-changed hint from each task; retain actual unavailable-source status.
+Clicking task-area blank space or add opens the shared task form. Clicking task title edits the local display name or deletes the task; checkbox and source link are independent. Cancel/Escape closes the editor and restores focus. Deletion preserves a tombstone without an undo banner. New drafts have stable identity during save retry. Preserve file folding and expansion across rerenders; source links never toggle summaries. Remove the noisy source-changed hint from each task; retain actual unavailable-source status.
 
 The task editor uses native host Modal / browser dialog, a visible label, a 2000-character limit, retained text on error and busy protection. Do not mutate source notes or erase historical events for local edits/deletion.
 

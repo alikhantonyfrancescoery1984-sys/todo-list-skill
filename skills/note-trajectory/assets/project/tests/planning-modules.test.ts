@@ -23,21 +23,21 @@ test('tag parsing deduplicates normalized Unicode names and preview does not cre
  await c.complete(id,true);const s=dailyStats(c.state,'2026-11-21',undefined,c.analyticsContext);assert.equal(s.modules.reduce((n,m)=>n+m.completed,0),1);assert.equal(s.modules.find(m=>m.name==='AI')?.completed,1);
  const raw=c.snapshot();for(const name of ['x #___','#OnlyTag'])await assert.rejects(c.createTask(name));assert.deepEqual(c.snapshot(),raw);
 });
-test('manual module rename retains aliases and rejects source names or collisions',async()=>{
+test('manual and source module rename persist, while collisions remain invalid',async()=>{
  const {c}=setup();const id=await c.createTask('报告 #市场研究');const module=c.taskModule(c.tasks.find(t=>t.id===id)!);
  await c.renameModule(module.id,'用户研究');assert.equal(c.taskModule(c.tasks[0]!).name,'用户研究');const second=await c.createTask('第二份 #市场研究');assert.equal(c.tasks.find(t=>t.id===second)?.moduleIds?.[0],module.id);
- await assert.rejects(c.renameModule('source:ai','anything'));await assert.rejects(c.renameModule(module.id,'AI'));await assert.rejects(c.renameModule(module.id,'___'));
- const saved=validateWorkspace(c.snapshot());assert.equal(saved.manualModules[0]?.name,'用户研究');
+ await c.renameModule('source:ai','学习资料');assert.equal(c.modules.find(m=>m.id==='source:ai')?.name,'学习资料');await assert.rejects(c.renameModule(module.id,'学习资料'));await assert.rejects(c.renameModule(module.id,'___'));
+ const saved=validateWorkspace(c.snapshot());assert.equal(saved.manualModules[0]?.name,'用户研究');assert.equal(saved.sourceModuleNames['source:ai'],'学习资料');
 });
-test('module deletion removes all member manual tasks but preserves source tasks and historical events',async()=>{
+test('module deletion moves every member task to inbox and preserves source tasks and historical events',async()=>{
  const {c,file}=setup();await c.open(file);const sourceIds=c.tasks.map(t=>t.id);const a=await c.createTask('主模块 #AI'),b=await c.createTask('次模块 #研究 #AI'),other=await c.createTask('保留 #研究');await c.complete(b,true);
- const receipts=structuredClone(c.state.receipts),completions=structuredClone(c.state.completions);assert.equal(c.moduleTaskCount('source:ai'),2);await c.removeModule('source:ai');
- assert(sourceIds.every(id=>c.tasks.some(t=>t.id===id)));assert(!c.tasks.some(t=>[a,b].includes(t.id)));assert(c.tasks.some(t=>t.id===other));assert.deepEqual(c.state.receipts,receipts);assert.deepEqual(c.state.completions,completions);assert(c.modules.find(m=>m.id==='source:ai')?.hidden);
- await c.showModule('source:ai');assert(!c.modules.find(m=>m.id==='source:ai')?.hidden);const research=c.modules.find(m=>m.name==='研究')!;await c.removeModule(research.id);assert(!c.tasks.some(t=>t.id===other));await c.removeModule(research.id);assert.doesNotThrow(()=>validateWorkspace(c.snapshot()));
+ const receipts=structuredClone(c.state.receipts),completions=structuredClone(c.state.completions);assert.equal(c.moduleTaskCount('source:ai'),sourceIds.length+2);await c.removeModule('source:ai');
+ assert(sourceIds.every(id=>c.tasks.some(t=>t.id===id)));assert([a,b,other].every(id=>c.tasks.some(t=>t.id===id)));assert.equal(c.taskModule(c.tasks.find(t=>t.id===a)!).id,'manual-inbox');assert.deepEqual(c.state.receipts,receipts);assert.deepEqual(c.state.completions,completions);assert(c.modules.find(m=>m.id==='source:ai')?.hidden);
+ await c.showModule('source:ai');assert(!c.modules.find(m=>m.id==='source:ai')?.hidden);const research=c.modules.find(m=>m.name==='研究')!;await c.removeModule(research.id);assert.equal(c.taskModule(c.tasks.find(t=>t.id===other)!).id,'manual-inbox');await c.removeModule(research.id);assert.doesNotThrow(()=>validateWorkspace(c.snapshot()));
 });
 test('module delete failure can retry, and saving task after invalid tags is atomic',async()=>{
  const x=setup(),id=await x.c.createTask('报告 #专题'),module=x.c.taskModule(x.c.tasks[0]!);const before=x.c.snapshot();await assert.rejects(x.c.updateTask(id,'changed #___'));assert.deepEqual(x.c.snapshot(),before);
- x.fail(true);await assert.rejects(x.c.removeModule(module.id));x.fail(false);await x.c.removeModule(module.id);assert.equal(x.c.tasks.length,0);assert.doesNotThrow(()=>validateWorkspace(x.c.snapshot()));
+ x.fail(true);await assert.rejects(x.c.removeModule(module.id));x.fail(false);await x.c.removeModule(module.id);assert.equal(x.c.tasks.length,1);assert.equal(x.c.taskModule(x.c.tasks[0]!).id,'manual-inbox');assert.doesNotThrow(()=>validateWorkspace(x.c.snapshot()));
 });
 test('DDL editing, failed create retry, synchronization and restart retain metadata',async()=>{
  const x=setup();x.fail(true);await assert.rejects(x.c.createTask('Draft #专题','stable',{dueAt:due,reminder:{value:2,unit:'hours'}}));x.fail(false);await x.c.createTask('Draft #专题','stable',{dueAt:due,reminder:{value:1,unit:'days'}});assert.equal(x.c.tasks.length,1);assert.equal(x.c.state.receipts.length,1);
@@ -55,14 +55,11 @@ test('inventory is current cumulative while dated additions and completions pres
  c.state.receipts.push({...c.state.receipts[1]!,id:'duplicate'});c.state.completions.push({...c.state.completions[0]!});const stats=dailyStats(c.state,'2026-11-22',undefined,c.analyticsContext);
  assert.equal(stats.total,1);assert.equal(stats.pending,0);assert.equal(stats.collected,1);assert.equal(stats.completed,1);assert.equal(dailyStats(c.state,'2026-11-21',undefined,c.analyticsContext).collected,1);assert.equal(setup(c.snapshot()).c.tasks.length,1);
 });
-test('seven local days union overlaps, clip midnight, preserve zero and use explicit ledger context',async()=>{
- const {c,file}=setup();await c.open(file);const noteId=c.state.notes[0]!.id;const interval=(id:string,start:string,end:string)=>({id,noteId,start,end,estimated:true,reason:'pause' as const});
- c.state.sessions=[interval('midnight','2026-11-20T23:59:40+08:00','2026-11-21T00:00:20+08:00'),interval('overlap','2026-11-21T00:00:10+08:00','2026-11-21T00:01:00+08:00'),interval('more','2026-11-21T12:00:00+08:00','2026-11-21T12:01:00+08:00')];
- const days=recentDays('2026-11-21');assert.deepEqual(days,['2026-11-15','2026-11-16','2026-11-17','2026-11-18','2026-11-19','2026-11-20','2026-11-21']);assert.deepEqual(days.map(d=>dailyStats(c.state,d,undefined,c.analyticsContext).activeMinutes*60),[0,0,0,0,0,20,120]);
- const snapshot=c.snapshot();assert.equal(snapshot.state.taskRegistry.length,0);assert.equal(dailyStats(snapshot.state,'2026-11-21',undefined,{tasks:snapshot.tasks,manualModules:snapshot.manualModules}).total,7);
+test('seven local days count unique completions using explicit ledger context',async()=>{
+ const {c,file}=setup();await c.open(file);const noteId=c.state.notes[0]!.id;c.state.completions=[{taskId:c.tasks[0]!.id,noteId,at:'2026-11-20T23:59:59+08:00'},{taskId:c.tasks[1]!.id,noteId,at:'2026-11-21T00:00:00+08:00'}];const days=recentDays('2026-11-21');assert.deepEqual(days.map(d=>dailyStats(c.state,d,undefined,c.analyticsContext).completed),[0,0,0,0,0,1,1]);const snapshot=c.snapshot();assert.equal(snapshot.state.taskRegistry.length,0);assert.equal(dailyStats(snapshot.state,'2026-11-21',undefined,{tasks:snapshot.tasks}).total,7);
 });
 test('schema v4 upgrades losslessly and malformed modules, references or reminders reject',async()=>{
- const {c}=setup();await c.createTask('Legacy');const raw=c.snapshot(),old={...raw,schemaVersion:4};delete (old as Partial<typeof old>).manualModules;delete (old as Partial<typeof old>).hiddenModules;assert.throws(()=>validateWorkspace({...raw,schemaVersion:'5'}));const migrated=validateWorkspace(old);assert.equal(migrated.schemaVersion,5);assert.deepEqual(migrated.tasks,raw.tasks);assert.equal(migrated.manualModules[0]?.id,'manual-inbox');
+ const {c}=setup();await c.createTask('Legacy');const raw=c.snapshot(),old={...raw,schemaVersion:4};delete (old as Partial<typeof old>).manualModules;delete (old as Partial<typeof old>).hiddenModules;assert.throws(()=>validateWorkspace({...raw,schemaVersion:'5'}));old.state={...old.state,schemaVersion:2} as unknown as typeof old.state;const migrated=validateWorkspace(old);assert.equal(migrated.schemaVersion,7);assert.deepEqual(migrated.tasks,raw.tasks);assert.equal(migrated.manualModules[0]?.id,'manual-inbox');
  for(const change of [(d:typeof raw)=>{d.tasks[0]!.moduleIds=['unknown']},(d:typeof raw)=>{d.tasks[0]!.reminder={value:1,unit:'hours'}},(d:typeof raw)=>{d.manualModules[0]!.name='AI'},(d:typeof raw)=>{d.manualModules[0]!.aliases=['___']}]){const bad=structuredClone(raw);change(bad);assert.throws(()=>validateWorkspace(bad));}
 });
 

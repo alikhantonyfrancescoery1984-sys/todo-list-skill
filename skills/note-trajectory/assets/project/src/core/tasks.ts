@@ -1,4 +1,26 @@
 import { fingerprint, type Note, type Task, type Config } from './model';
+/** Plugin-owned block IDs from older versions: remove them so notes stay plain Markdown. */
+const LEGACY_ID=/[ \t]*\^nt-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}/g;
+const TASK_LINE=/^(\s*[-*+]\s+\[[ xX]\])\s*(.*)$/;
+/** Strip legacy plugin block IDs and repair the spacing an ID used to occupy. */
+export function stripTaskBlockIds(markdown:string):string{
+  const lines=markdown.split('\n');let fence='',frontmatter=false,comment=false,changed=false;
+  for(let line=0;line<lines.length;line++){
+    const raw=lines[line]!,body=raw.replace(/\r$/,'');
+    if(line===0&&body.trim()==='---'){frontmatter=true;continue}
+    if(frontmatter){if(body.trim()==='---')frontmatter=false;continue}
+    const marker=body.match(/^\s{0,3}(`{3,}|~{3,})/);if(marker){const m=marker[1]!;if(!fence)fence=m;else if(m[0]===fence[0]&&m.length>=fence.length)fence='';continue}
+    if(fence)continue;
+    if(body.includes('%%')){if((body.match(/%%/g)?.length??0)%2)comment=!comment;continue}
+    if(body.includes('<!--')){comment=!body.includes('-->');continue}
+    if(comment){if(body.includes('-->'))comment=false;continue}
+    const match=body.match(TASK_LINE);if(!match)continue;
+    const text=match[2]!.replace(LEGACY_ID,' ').replace(/[ \t]{2,}/g,' ').trim();
+    const next=(text?`${match[1]} ${text}`:match[1]!)+(raw.endsWith('\r')?'\r':'');
+    if(next!==raw){lines[line]=next;changed=true}
+  }
+  return changed?lines.join('\n'):markdown;
+}
 export function extractTasks(note: Note, previous: Task[] = []): Task[] {
   const found: {text:string; line:number; done:boolean; blockId?:string}[] = [];
   let fence = '', frontmatter = false, comment = false;
@@ -12,8 +34,10 @@ export function extractTasks(note: Note, previous: Task[] = []): Task[] {
     if (raw.includes('<!--')) { comment=!raw.includes('-->'); continue; }
     if (comment) { if (raw.includes('-->')) comment=false; continue; }
     const m=raw.match(/^\s*[-*+]\s+\[([ xX])\]\s+(.+)$/); if(!m) continue;
-    const block=m[2]!.match(/\s+\^([a-zA-Z0-9-]+)\s*$/);
-    found.push({text:m[2]!.replace(/\s+\^[a-zA-Z0-9-]+\s*$/,'').trim(),line,done:m[1]!==' ',blockId:block?.[1]});
+    const body=m[2]!.replace(LEGACY_ID,'');
+    const ending=body.match(/(?:^|\s)\^([a-zA-Z0-9-]+)\s*$/);
+    const text=body.replace(/(?:^|\s)\^[a-zA-Z0-9-]+\s*$/,'').replace(/[ \t]{2,}/g,' ').trim();
+    found.push({text,line,done:m[1]!==' ',blockId:ending?.[1]});
   }
   const norm=(s:string)=>s.trim().replace(/\s+/g,' ');
   const previousHere=previous.filter(t=>t.noteId===note.id);
@@ -26,7 +50,7 @@ export function extractTasks(note: Note, previous: Task[] = []): Task[] {
     const blockMatch=f.blockId?previousHere.find(t=>t.blockId===f.blockId):undefined;
     const generated=f.blockId?`task-${fingerprint(note.id)}-b-${f.blockId}`:`task-${fingerprint(note.id)}-${fingerprint(text)}-${occurrence}`;
     const duplicateBlock=!!f.blockId&&found.filter(t=>t.blockId===f.blockId).length>1;
-    return {...f,noteId:note.id,id:blockMatch?.id??(!duplicate&&same.length===1?same[0]!.id:generated),ambiguous:duplicateBlock||(!f.blockId&&(duplicate||!!oldAtLine))};
+    return {...f,noteId:note.id,id:blockMatch?.id??(!f.blockId&&!duplicate&&same.length===1?same[0]!.id:generated),ambiguous:duplicateBlock||(!f.blockId&&(duplicate||!!oldAtLine))};
   });
 }
 export function classify(path:string,columns:string[],config:Config):string {

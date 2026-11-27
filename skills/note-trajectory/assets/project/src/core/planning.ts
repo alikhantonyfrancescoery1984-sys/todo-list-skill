@@ -1,7 +1,8 @@
 import type {Task} from './model';
 export interface Reminder {value:number;unit:'days'|'hours'}
-export interface PlannedTask extends Task {origin?:'manual';label?:string;deletedAt?:string;dueAt?:string;reminder?:Reminder;moduleIds?:string[]}
-export interface TaskOptions {dueAt?:string|null;reminder?:Reminder|null}
+export type TaskHorizon='today'|'next'|'later';
+export interface PlannedTask extends Task {origin?:'manual';label?:string;deletedAt?:string;dueAt?:string;reminder?:Reminder;moduleIds?:string[];groupId?:string;groupExcluded?:boolean;horizon?:TaskHorizon}
+export interface TaskOptions {dueAt?:string|null;reminder?:Reminder|null;groupId?:string|null;newGroupName?:string;horizon?:TaskHorizon;moduleId?:string}
 export const SHANGHAI_ZONE='Asia/Shanghai';
 export function localDeadline(at:string):string{return new Intl.DateTimeFormat('sv-SE',{timeZone:SHANGHAI_ZONE,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).format(new Date(at)).replace(' ','T');}
 export function parseDeadline(value:string):string|undefined{
@@ -15,6 +16,10 @@ export function deadlineState(task:Pick<PlannedTask,'dueAt'|'reminder'|'done'>,n
  if(task.done)return 'done';if(!task.dueAt)return 'none';if(now>=Date.parse(task.dueAt))return 'overdue';if(task.reminder&&now>=reminderAt(task)!)return 'warning';return 'scheduled';
 }
 export function orderByDeadline<T extends PlannedTask>(tasks:readonly T[]):T[]{return tasks.map((task,index)=>({task,index})).sort((a,b)=>{const d=(a.task.dueAt?Date.parse(a.task.dueAt):Infinity)-(b.task.dueAt?Date.parse(b.task.dueAt):Infinity);return Number.isNaN(d)||d===0?a.index-b.index:d;}).map(v=>v.task);}
+export function taskHorizon(task:PlannedTask,now:Date):TaskHorizon{
+ if(task.dueAt&&Date.parse(task.dueAt)<=new Date(`${localDeadline(now.toISOString()).slice(0,10)}T23:59:59+08:00`).getTime())return 'today';
+ return task.horizon??(task.dueAt?'next':'later');
+}
 export function parseTags(text:string):{body:string;tags:string[]}{
  const tags:string[]=[];const body=text.replace(/(^|[\s，,；;])#([\p{L}\p{N}_/-]+)/gu,(_match,space:string,name:string)=>{if(!tags.some(t=>tagKey(t)===tagKey(name)))tags.push(name);return space;}).replace(/[ \t]+/g,' ').trim();return {body,tags};
 }
